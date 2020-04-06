@@ -40,6 +40,29 @@ accept = 9999
 connect = 8888
 ```
 
+### IRC Client
+You just need to set your password:
+For an open bouncer
+```
+PasswordGoesHere/ServerGoesHere
+```
+
+For a password protected one
+```
+ServerPassword||PasswordGoesHere/ServerGoesHere
+```
+
+To save clientbuffers for your client
+```
+PasswordGoesHere/ServerGoesHere/deviceid
+```
+
+Here is an example for a desktop and mobile setup with a password protected server connecting to DALnet:
+```
+dragon||AJFiej2fn2345/irc.dal.net:6667/desktop
+dragon||AJFiej2fn2345/irc.dal.net:6667/mobile
+```
+
 ### Copyright
 (c) 2020 Andrew Lee <andrew@imperialfamily.com>
 All Rights Reserved.

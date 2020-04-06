@@ -4,6 +4,8 @@
 const net = require('net');
 const server = net.Server();
 
+const SERVER_PASSWORD='dragon';  // Leave blank for none, if you set one it will be mandatory.
+
 // Track IRC (Server) Connections
 var connections=[];
 function getConnection(irc) {
@@ -27,42 +29,50 @@ function getConnection(irc) {
 // Bouncer Server
 server.listen(8888);
 server.on('connection', function(socket) {
+  socket.wrong=false;
   socket.on('data', async function(chunk) {
     let input = chunk.toString().trim().split("\n");
     for(i=0;i<input.length;i++) {
       let commands=input[i].split(" ");
       let command=commands[0].toUpperCase();
-      if(!this.irc || !this.irc.connected) {
+      if(!this.irc || !this.irc.connected && !this.wrong ) {
         if(command=="PASS" && commands.length==2) {
-          this.irc={
-            server:null,
-            port:0,
-            nick:null,
-            user:null,
-            realname:null,
-            password:null,
-            authenticated:false,
-            reconnecting:false,
-            buffer:'default',  // name of clientbuf
-            connected:false
-          };
-
-          origin = commands[1].trim().split("/");
-          if(origin.length!=2 && origin.length!=3)
+          if(SERVER_PASSWORD.length>0 && commands[1].split("||")[0]!=SERVER_PASSWORD) {
+            this.write(":jbnc *** Incorrect Password ***\n");
+            this.wrong=true;
             this.end();
+          }
           else {
-            this.irc.password = origin[0];
-            _server = origin[1].split(":");
-            this.irc.server = _server[0];
-            this.irc.port = (_server[1] ? parseInt(_server[1]) : 6667);
-            if(origin[2])
-              this.irc.buffer=origin[2].trim();
+            this.irc={
+              server:null,
+              port:0,
+              nick:null,
+              user:null,
+              realname:null,
+              password:null,
+              authenticated:false,
+              reconnecting:false,
+              buffer:'default',  // name of clientbuf
+              connected:false
+            };
+
+            origin = commands[1].trim().split("/");
+            if(origin.length!=2 && origin.length!=3)
+              this.end();
+            else {
+              this.irc.password = origin[0];
+              _server = origin[1].split(":");
+              this.irc.server = _server[0];
+              this.irc.port = (_server[1] ? parseInt(_server[1]) : 6667);
+              if(origin[2])
+                this.irc.buffer=origin[2].trim();
+            }
           }
         }
-        else if(command=="NICK" && commands.length==2) {
+        else if(command=="NICK" && commands.length==2 && !this.wrong) {
           this.irc.nick=commands[1].trim();
         }
-        else if(command=="USER" && commands.length>=5) {
+        else if(command=="USER" && commands.length>=5 && !this.wrong) {
           this.irc.user = commands[1].trim();
           this.irc.realname = input[i].split(" :").pop();
 
@@ -79,7 +89,7 @@ server.on('connection', function(socket) {
             this.end();
           }
       }
-      else {
+      else if(!this.wrong) {
         if(this.connection && this.connection.irc.authenticated) {
           command = input[i].toString().split(" ");
           if(command[0] != "QUIT") {
@@ -93,22 +103,27 @@ server.on('connection', function(socket) {
           }
         }
       }
+      else {
+        this.end();
+      }
     }
   });
   socket.on('end', function() {
-    for(y=0;y<this.connection.buffers.length;y++) {
-      if(this.connection.buffers[y].name==this.irc.buffer) {
-        this.connection.buffers[y].connected=false;
-        break;
+    if(this.connection && this.connection.buffers) {
+      for(y=0;y<this.connection.buffers.length;y++) {
+        if(this.connection.buffers[y].name==this.irc.buffer) {
+          this.connection.buffers[y].connected=false;
+          break;
+        }
       }
+      for(i=0;i<this.connection.parents.length;i++) {
+        if(this.connection.parents[i]==this)
+          break;
+      }
+      this.connection.parents.splice(i,1);
+      if(this.connection.parents.length==0)
+        this.connection.irc.connected=false;
     }
-    for(i=0;i<this.connection.parents.length;i++) {
-      if(this.connection.parents[i]==this)
-        break;
-    }
-    this.connection.parents.splice(i,1);
-    if(this.connection.parents.length==0)
-      this.connection.irc.connected=false;
   });
   socket.on('error', function(err) {
     console.log(err);
