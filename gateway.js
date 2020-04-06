@@ -8,7 +8,7 @@ const server = net.Server();
 const SERVER_PORT=8888;
 
 const IRC_SERVER='127.0.0.1';  // server
-const IRC_PORT='6667';         // port
+const IRC_PORT='6667';         // port (put +6697 ("+"port#) if ssl)
 
 // Track IRC (Server) Connections
 var connections=[];
