@@ -18,7 +18,8 @@ git clone https://github.com/realrasengan/jbnc
 
 2. Run
 ```
-node bouncer.js
+node bouncer.js &
+node bouncer-ssl.js &
 ```
 
 #### SSL
@@ -36,8 +37,12 @@ key  = /etc/stunnel/cert.key
 client = no
 
 [jbnc]
-accept = 9999
+accept = 9998
 connect = 8888
+
+[jbnc-ssl]
+accept = 9999
+connect = 8889
 ```
 
 ### IRC Client
@@ -62,6 +67,8 @@ Here is an example for a desktop and mobile setup with a password protected serv
 dragon||AJFiej2fn2345/irc.dal.net:6667/desktop
 dragon||AJFiej2fn2345/irc.dal.net:6667/mobile
 ```
+
+The server port 9999 is for SSL->Non-SSL and port 10000 is for SSL->SSL.  Complete SSL is recommended (not to be confused with E2E Encryption).
 
 ### TODO
 1. Nick tracking (track if your nickname was changed)
