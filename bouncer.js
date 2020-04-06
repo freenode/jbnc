@@ -1,6 +1,7 @@
 // jbnc v0.1
 // Copyright (C) 2020 Andrew Lee <andrew@imperialfamily.com>
 // All Rights Reserved.
+const tls = require('tls');
 const net = require('net');
 const server = net.Server();
 
@@ -63,7 +64,7 @@ server.on('connection', function(socket) {
               this.irc.password = origin[0];
               _server = origin[1].split(":");
               this.irc.server = _server[0];
-              this.irc.port = (_server[1] ? parseInt(_server[1]) : 6667);
+              this.irc.port = (_server[1] ? _server[1] : 6667);
               if(origin[2])
                 this.irc.buffer=origin[2].trim();
             }
@@ -155,11 +156,13 @@ async function clientReconnect(socket,c) {
 
 async function clientConnect(socket) {
   let success=true;
+  connector=net.createConnection;
+  if(socket.irc.port.toString().substr(0,1)=="+") {
+    connector=tls.connect;
+    socket.irc.port=parseInt(socket.irc.port.toString().substr(1));
+  }
   try {
-    if(socket.irc.port.substr(0,1)=="+")
-      socket.connection = tls.connect(socket.irc.port.substr(1), socket.irc.server);
-    else
-      socket.connection = net.createConnection(socket.irc.port, socket.irc.server);
+    socket.connection = connector(socket.irc.port, socket.irc.server);
   } catch(e) {
     success=false;
   }
