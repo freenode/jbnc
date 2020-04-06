@@ -39,10 +39,6 @@ client = no
 [jbnc]
 accept = 9998
 connect = 8888
-
-[jbnc-ssl]
-accept = 9999
-connect = 8889
 ```
 
 ### IRC Client
@@ -68,7 +64,12 @@ dragon||AJFiej2fn2345/irc.dal.net:6667/desktop
 dragon||AJFiej2fn2345/irc.dal.net:6667/mobile
 ```
 
-The server port 9999 is for SSL->Non-SSL and port 10000 is for SSL->SSL.  Complete SSL is recommended (not to be confused with E2E Encryption).
+#### SSL Client
+Use "+port" to do SSL.  For example:
+```
+dragon||Ajdfklsjfa/irc.dal.net:+6697/mobile
+```
+
 
 ### TODO
 1. Nick tracking (track if your nickname was changed)

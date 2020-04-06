@@ -156,7 +156,10 @@ async function clientReconnect(socket,c) {
 async function clientConnect(socket) {
   let success=true;
   try {
-    socket.connection = net.createConnection(socket.irc.port, socket.irc.server);
+    if(socket.irc.port.substr(0,1)=="+")
+      socket.connection = tls.connect(socket.irc.port.substr(1), socket.irc.server);
+    else
+      socket.connection = net.createConnection(socket.irc.port, socket.irc.server);
   } catch(e) {
     success=false;
   }
