@@ -91,6 +91,7 @@ To get a list of commands:
 ### TODO
 
 Push notifications
+On Reconnect make sure existing connections dont see whois/names/etc.
 
 ### Copyright
 (c) 2020 Andrew Lee <andrew@imperialfamily.com>
