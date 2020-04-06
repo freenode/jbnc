@@ -12,7 +12,7 @@ var connections=[];
 function getConnection(irc) {
   let i;
   for(i=0;i<connections.length;i++) {
-    if(connections[i].irc.pass==irc.pass &&
+    if(connections[i].irc.password==irc.password &&
       connections[i].irc.server==irc.server &&
       connections[i].irc.nick_original==irc.nick &&
       connections[i].irc.port==irc.port &&
@@ -66,7 +66,7 @@ server.on('connection', function(socket) {
               this.irc.password = origin[0];
               _server = origin[1].split(":");
               this.irc.server = _server[0];
-              this.irc.port = (_server[1] ? _server[1] : 6667);
+              this.irc.port = (_server[1] ? _server[1].trim() : 6667);
               if(origin[2])
                 this.irc.buffer=origin[2].trim();
             }
@@ -105,11 +105,28 @@ server.on('connection', function(socket) {
                 this.write(":*jbnc NOTICE * :Type /JBNC <COMMAND>\n");
                 this.write(":*jbnc NOTICE * :Commands:\n");
                 this.write(":*jbnc NOTICE * :QUIT - Disconnects and deletes your profile\n");
+                this.write(":*jbnc NOTICE * :PASS - Password\n");
+                this.write(":*jbnc NOTICE * :***************\n");
               }
               else {
                 switch(command[1].toUpperCase()) {
                   case 'QUIT':
+                    this.write(":*jbnc NOTICE * :Sayonara.\n");
                     this.connection.end();
+                    break;
+                  case 'PASS':
+                    if(command[3]) {
+                      if(command[2]==this.connection.irc.password) {
+                        this.connection.irc.password=command[3];
+                        this.write(":*jbnc NOTICE * :Password changed to "+command[3]+"\n");
+                      }
+                      else {
+                        this.write(":*jbnc NOTICE * :Incorrect password.\n");
+                      }
+                    }
+                    else {
+                      this.write(":*jbnc NOTICE * :Syntax error.\n");
+                    }
                     break;
                 }
               }
