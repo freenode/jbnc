@@ -16,6 +16,7 @@ There are more fine tuned instructions below to further customize and improve yo
 - No registration or account required
 - Separate buffers for clients possible
 - SSL with stunnel
+- Tracks if your nick is changed, updates.
 
 ### Setup / Installation
 1. Clone the repo
@@ -76,16 +77,17 @@ Use "+port" to do SSL.  For example:
 dragon||Ajdfklsjfa/irc.dal.net:+6697/mobile
 ```
 
+#### Whilst Connected
+To get a list of commands:
+```
+/jbnc
+```
 
 ### TODO
-1. Nick tracking (track if your nickname was changed)
 
-2. Write buffer to file and playback
-
-3. Auto reconnect
-
-4. Push notifications
-
+1. Change password
+2. Auto reconnect
+3. Push notifications
 
 ### Copyright
 (c) 2020 Andrew Lee <andrew@imperialfamily.com>

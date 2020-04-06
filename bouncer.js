@@ -5,7 +5,7 @@ const tls = require('tls');
 const net = require('net');
 const server = net.Server();
 
-const SERVER_PASSWORD='dragon';  // Leave blank for none, if you set one it will be mandatory.
+const SERVER_PASSWORD='';  // Leave blank for none, if you set one it will be mandatory.
 
 // Track IRC (Server) Connections
 var connections=[];
@@ -14,7 +14,7 @@ function getConnection(irc) {
   for(i=0;i<connections.length;i++) {
     if(connections[i].irc.pass==irc.pass &&
       connections[i].irc.server==irc.server &&
-      connections[i].irc.nick==irc.nick &&
+      connections[i].irc.nick_original==irc.nick &&
       connections[i].irc.port==irc.port &&
       connections[i].irc.user==irc.user) {
       break;
@@ -39,7 +39,7 @@ server.on('connection', function(socket) {
       if(!this.irc || !this.irc.connected && !this.wrong ) {
         if(command=="PASS" && commands.length==2) {
           if(SERVER_PASSWORD.length>0 && commands[1].split("||")[0]!=SERVER_PASSWORD) {
-            this.write(":jbnc *** Incorrect Password ***\n");
+            this.write(":jbnc 464 :*** Incorrect Password ***\n");
             this.wrong=true;
             this.end();
           }
@@ -48,6 +48,8 @@ server.on('connection', function(socket) {
               server:null,
               port:0,
               nick:null,
+              nick_original:null,
+              namechange:null,
               user:null,
               realname:null,
               password:null,
@@ -93,14 +95,34 @@ server.on('connection', function(socket) {
       else if(!this.wrong) {
         if(this.connection && this.connection.irc.authenticated) {
           command = input[i].toString().split(" ");
-          if(command[0] != "QUIT") {
-            this.connection.write(input[i].toString() + "\n");
-            for(m=0;m<this.connection.parents.length;m++) {
-              if(this.connection.parents[m]==this)
-                continue;
-              else
-                this.connection.parents[m].write(":"+this.connection.irc.nick+" "+input[i].toString() + "\n");
-            }
+          switch(command[0]) {
+            case 'QUIT':
+              break;
+            case 'JBNC':
+              if(!command[1]) {
+                this.write(":*jbnc NOTICE * :Welcome to JBNC\n");
+                this.write(":*jbnc NOTICE * :***************\n");
+                this.write(":*jbnc NOTICE * :Type /JBNC <COMMAND>\n");
+                this.write(":*jbnc NOTICE * :Commands:\n");
+                this.write(":*jbnc NOTICE * :QUIT - Disconnects and deletes your profile\n");
+              }
+              else {
+                switch(command[1].toUpperCase()) {
+                  case 'QUIT':
+                    this.connection.end();
+                    break;
+                }
+              }
+              break;
+            default:
+              this.connection.write(input[i].toString() + "\n");
+              for(m=0;m<this.connection.parents.length;m++) {
+                if(this.connection.parents[m]==this)
+                  continue;
+                else
+                  this.connection.parents[m].write(":"+this.connection.irc.nick+" "+input[i].toString() + "\n");
+              }
+              break;
           }
         }
       }
@@ -122,8 +144,10 @@ server.on('connection', function(socket) {
           break;
       }
       this.connection.parents.splice(i,1);
-      if(this.connection.parents.length==0)
+      if(this.connection.parents.length==0) {
         this.connection.irc.connected=false;
+        this.connection.write("AWAY :jbnc\n");
+      }
     }
   });
   socket.on('error', function(err) {
@@ -148,6 +172,10 @@ async function clientReconnect(socket,c) {
     socket.connection.buffers[x]={name:socket.irc.buffer,data:'',connected:true};
   }
   socket.write(socket.connection.connectbuf+"\n");
+  if(socket.connection.irc.nick!=socket.connection.irc.nick_original) {
+    socket.write(":"+socket.connection.irc.namechange+" NICK "+socket.connection.irc.nick+"\n");
+  }
+  await socket.connection.write("AWAY\n");
   await socket.connection.write("LUSERS\n");
   await socket.connection.write("MOTD"+"\n");
   await socket.connection.write("MODE "+socket.connection.irc.nick+"\n");
@@ -179,6 +207,7 @@ async function clientConnect(socket) {
       this.irc.connected=true;
       this.write('NICK '+this.irc.nick+'\n');
       this.write('USER '+this.irc.user+' localhost '+this.irc.server+' :'+this.irc.realname+'\n');
+      this.irc.nick_original=this.irc.nick;
     });
     socket.connection.on('data', async function(d){
       if(d.toString().substr(d.length-1)!="\n")
@@ -193,6 +222,7 @@ async function clientConnect(socket) {
             case '001':
               if(!this.irc.authenticated) {
                 this.irc.authenticated=true;
+                this.irc.namechange=data[2];
                 connections[connections.length] = this;
               }
             case '002':
@@ -203,6 +233,7 @@ async function clientConnect(socket) {
               break;
             case '319':
               if(this.irc.reconnecting) {
+
                 if(data[2]==this.irc.nick) {
                   for(x=4;x<data.length;x++) {
                     if(data[x].length>1) {
@@ -225,6 +256,17 @@ async function clientConnect(socket) {
                   }
                 }
                 this.irc.reconnecting=false;
+              }
+              break;
+            case 'NICK':
+              if(data[0].substr(1).split("!")[0]==this.irc.nick) {
+                this.irc.nick=data[2].substr(1).trim();
+              }
+              break;
+            case '433':
+              if(data[2]=='*') {
+                this.write("NICK "+data[3]+"_"+"\n");
+                this.irc.nick=data[3]+"_";
               }
               break;
           }
@@ -253,6 +295,7 @@ async function clientConnect(socket) {
       for(z=0;z<this.parents.length;z++) {
         this.parents[z].end();
       }
+      this.buffers=false;
     });
   }
   else
