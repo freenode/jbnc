@@ -19,7 +19,6 @@ git clone https://github.com/realrasengan/jbnc
 2. Run
 ```
 node bouncer.js &
-node bouncer-ssl.js &
 ```
 
 #### SSL
@@ -32,8 +31,8 @@ sudo apt install stunnel
 
 3. Edit /etc/stunnel/stunnel.conf
 ```
-cert = /etc/stunnel/cert.pem
-key  = /etc/stunnel/cert.key
+cert = /etc/stunnel/fullchain.pem
+key  = /etc/stunnel/privkey.pem
 client = no
 
 [jbnc]
