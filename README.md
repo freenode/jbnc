@@ -70,6 +70,8 @@ dragon||AJFiej2fn2345/irc.dal.net:6667/mobile
 
 3. Auto reconnect
 
+4. Push notifications
+
 
 ### Copyright
 (c) 2020 Andrew Lee <andrew@imperialfamily.com>
