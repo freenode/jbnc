@@ -2,7 +2,14 @@
 ## Bouncer with no authentication required written in nodejs with support for separate client buffers for playback history, an always-on connection, and SSL with stunnel.
 
 ### Purpose
-Bouncers are hard to configure.  I felt that we needed an easier one in this world.  This takes requires no configuration to connect!
+Bouncers are hard to configure.  I felt that we needed an easier one in this world.  This takes requires no configuration to connect!  This was a 1-day hackathon project and will improve over time.  Extremely WIP, but it works! :-)
+
+### Example
+There is an example running at `jbnc.eyearesee.com` on SSL port 9998 (or plaintext 8888).  Point your IRC client at this and set a password like:
+```
+SomePasswordy89153/irc.dal.net:+6697
+```
+There are more fine tuned instructions below to further customize and improve your experience.
 
 ### Features
 - Always on connection to IRC
