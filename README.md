@@ -29,6 +29,11 @@ git clone https://github.com/realrasengan/jbnc
 node bouncer.js &
 ```
 
+If you run an IRC server and simply want to enhance your IRC server to allow users to stay always on with just a password (and optional client buffer id):
+```
+node gateway.js &
+```
+
 #### SSL
 1. On Ubuntu
 ```
