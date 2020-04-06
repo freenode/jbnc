@@ -63,6 +63,14 @@ dragon||AJFiej2fn2345/irc.dal.net:6667/desktop
 dragon||AJFiej2fn2345/irc.dal.net:6667/mobile
 ```
 
+### TODO
+1. Nick tracking (track if your nickname was changed)
+
+2. Write buffer to file and playback
+
+3. Auto reconnect
+
+
 ### Copyright
 (c) 2020 Andrew Lee <andrew@imperialfamily.com>
 All Rights Reserved.
