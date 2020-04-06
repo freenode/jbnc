@@ -85,8 +85,7 @@ To get a list of commands:
 
 ### TODO
 
-1. Auto reconnect
-2. Push notifications
+Push notifications
 
 ### Copyright
 (c) 2020 Andrew Lee <andrew@imperialfamily.com>

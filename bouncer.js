@@ -56,7 +56,8 @@ server.on('connection', function(socket) {
               authenticated:false,
               reconnecting:false,
               buffer:'default',  // name of clientbuf
-              connected:false
+              connected:false,
+              doclose:false
             };
 
             origin = commands[1].trim().split("/");
@@ -105,13 +106,14 @@ server.on('connection', function(socket) {
                 this.write(":*jbnc NOTICE * :Type /JBNC <COMMAND>\n");
                 this.write(":*jbnc NOTICE * :Commands:\n");
                 this.write(":*jbnc NOTICE * :QUIT - Disconnects and deletes your profile\n");
-                this.write(":*jbnc NOTICE * :PASS - Password\n");
+                this.write(":*jbnc NOTICE * :PASS - Change your password\n");
                 this.write(":*jbnc NOTICE * :***************\n");
               }
               else {
                 switch(command[1].toUpperCase()) {
                   case 'QUIT':
                     this.write(":*jbnc NOTICE * :Sayonara.\n");
+                    this.connection.irc.doclose=true;
                     this.connection.end();
                     break;
                   case 'PASS':
@@ -127,6 +129,9 @@ server.on('connection', function(socket) {
                     else {
                       this.write(":*jbnc NOTICE * :Syntax error.\n");
                     }
+                    break;
+                  default:
+                    this.write(":*jbnc NOTICE * :Unknown command.\n");
                     break;
                 }
               }
@@ -148,7 +153,7 @@ server.on('connection', function(socket) {
       }
     }
   });
-  socket.on('end', function() {
+  socket.on('close', function() {
     if(this.connection && this.connection.buffers) {
       for(y=0;y<this.connection.buffers.length;y++) {
         if(this.connection.buffers[y].name==this.irc.buffer) {
@@ -166,6 +171,7 @@ server.on('connection', function(socket) {
         this.connection.write("AWAY :jbnc\n");
       }
     }
+    this.destroy();
   });
   socket.on('error', function(err) {
     console.log(err);
@@ -306,13 +312,14 @@ async function clientConnect(socket) {
         }
       }
     });
-    socket.connection.on('end', function() {
+    socket.connection.on('close', function() {
       c = getConnection(this.irc)
       connections.splice(c,1);
       for(z=0;z<this.parents.length;z++) {
         this.parents[z].end();
       }
       this.buffers=false;
+      this.destroy();
     });
   }
   else
