@@ -225,14 +225,16 @@ server.on('connection', function(socket) {
     if(connections[this.hash] && connections[this.hash].buffers[this.clientbuffer]) {
       connections[this.hash].buffers[this.clientbuffer].connected=false;
     }
-    for(i=0;i<connections[this.hash].parents.length;i++) {
-      if(connections[this.hash].parents[i]==this)
-        break;
-    }
-    connections[this.hash].parents.splice(i,1);
-    if(connections[this.hash].parents.length==0) {
-      connections[this.hash].connected=false;
-      connections[this.hash].write("AWAY :jbnc\n");
+    if(connections[this.hash]) {
+      for(i=0;i<connections[this.hash].parents.length;i++) {
+        if(connections[this.hash].parents[i]==this)
+          break;
+      }
+      connections[this.hash].parents.splice(i,1);
+      if(connections[this.hash].parents.length==0) {
+        connections[this.hash].connected=false;
+        connections[this.hash].write("AWAY :jbnc\n");
+      }
     }
     this.destroy();
   });
@@ -367,7 +369,10 @@ function clientConnect(socket) {
               if(!this.authenticated) {
                 this.authenticated=true;
                 this.name_original=data[2];
-                this.host=lines[n].substr(lines[n].lastIndexOf("@")+1).trim();
+                if(lines[n].lastIndexOf("@")>0)
+                  this.host=lines[n].substr(lines[n].lastIndexOf("@")+1).trim();
+                else
+                  this.host="jbnc";
                 connections[hash(this.nick_original+this.user+this.password+this.server+this.port.toString())] = this;
               }
             case '002':
