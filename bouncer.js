@@ -300,12 +300,12 @@ async function clientConnect(socket) {
             if(data[0] == "PING")
               this.write("PONG "+data[1].substr(1)+"\n");
 //          }
-          else {
-            for(m=0;m<this.parents.length;m++)
-              this.parents[m].write(lines[n]+"\n");
-          }
+//          else {
+//            for(m=0;m<this.parents.length;m++)
+//              this.parents[m].write(lines[n]+"\n");
+//          }
           // store clientbuf if not connected
-          if(lines[n].indexOf("PRIVMSG")>0) {
+          if(lines[n].indexOf("PRIVMSG")>0 || lines[n].indexOf("NOTICE")>0) {
             for(y=0;y<this.buffers.length;y++) {
               if(!this.buffers[y].connected) {
                 this.buffers[y].data+=lines[n]+"\n";
