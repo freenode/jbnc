@@ -9,10 +9,12 @@ const fs = require('fs');
 const config=JSON.parse(fs.readFileSync("jbnc.conf"));
 
 const BOUNCER_PASSWORD=config.bouncerPassword;
+var SERVER_PORT=0;
+var SERVER='';
 
 if(config.mode=='gateway') {
-  const SERVER_PORT=config.serverPort;
-  const SERVER=config.server;
+  SERVER_PORT=config.serverPort;
+  SERVER=config.server;
 }
 
 // Track IRC (Server) Connections
@@ -53,8 +55,8 @@ server.on('connection', function(socket) {
           }
           else {
             this.irc={
-              server:(config.mode=='gateway'?SERVER:null),
-              port:(config.mode=='gateway'?SERVER_PORT:0),
+              server:SERVER,
+              port:SERVER_PORT,
               nick:null,
               nick_original:null,
               namechange:null,
