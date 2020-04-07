@@ -296,10 +296,10 @@ async function clientConnect(socket) {
               }
               break;
           }
-          if(!this.irc.connected) {
+//          if(!this.irc.connected) {
             if(data[0] == "PING")
               this.write("PONG "+data[1].substr(1)+"\n");
-          }
+//          }
           else {
             for(m=0;m<this.parents.length;m++)
               this.parents[m].write(lines[n]+"\n");
