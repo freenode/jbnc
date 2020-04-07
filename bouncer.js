@@ -4,8 +4,16 @@
 const tls = require('tls');
 const net = require('net');
 const server = net.Server();
+const fs = require('fs');
 
-const SERVER_PASSWORD='';  // Leave blank for none, if you set one it will be mandatory.
+const config=JSON.parse(fs.readFileSync("jbnc.conf"));
+
+const BOUNCER_PASSWORD=config.bouncerPassword;
+
+if(config.mode=='gateway') {
+  const SERVER_PORT=config.serverPort;
+  const SERVER=config.server;
+}
 
 // Track IRC (Server) Connections
 var connections=[];
@@ -28,7 +36,7 @@ function getConnection(irc) {
 }
 
 // Bouncer Server
-server.listen(8888);
+server.listen(config.bouncerPort ? config.bouncerPort : 8888);
 server.on('connection', function(socket) {
   socket.wrong=false;
   socket.on('data', async function(chunk) {
@@ -38,15 +46,15 @@ server.on('connection', function(socket) {
       let command=commands[0].toUpperCase();
       if(!this.irc || !this.irc.connected && !this.wrong ) {
         if(command=="PASS" && commands.length==2) {
-          if(SERVER_PASSWORD.length>0 && commands[1].split("||")[0]!=SERVER_PASSWORD) {
+          if(BOUNCER_PASSWORD.length>0 && commands[1].split("||")[0]!=BOUNCER_PASSWORD) {
             this.write(":jbnc 464 :*** Incorrect Password ***\n");
             this.wrong=true;
             this.end();
           }
           else {
             this.irc={
-              server:null,
-              port:0,
+              server:(config.mode=='gateway'?SERVER:null),
+              port:(config.mode=='gateway'?SERVER_PORT:0),
               nick:null,
               nick_original:null,
               namechange:null,
@@ -59,20 +67,30 @@ server.on('connection', function(socket) {
               connected:false,
               doclose:false
             };
-
             origin = commands[1].trim().split("/");
-            if(origin.length!=2 && origin.length!=3)
-              this.end();
+            if(origin[0].indexOf("||")>=0)
+              this.irc.password = origin[0].split("||")[1];
+            else
+              this.irc.password = origin[0];
+
+            if(config.mode=="gateway") {
+              if(origin.length!=1 && origin.length!=2)
+                this.end();
+              else {
+                if(origin[1])
+                  this.irc.buffer=origin[1].trim();
+              }
+            }
             else {
-              if(origin[0].indexOf("||")>=0)
-                this.irc.password = origin[0].split("||")[1];
-              else
-                this.irc.password=origin[0];
-              _server = origin[1].split(":");
-              this.irc.server = _server[0];
-              this.irc.port = (_server[1] ? _server[1].trim() : 6667);
-              if(origin[2])
-                this.irc.buffer=origin[2].trim();
+              if(origin.length!=2 && origin.length!=3)
+                this.end();
+              else {
+                _server = origin[1].split(":");
+                this.irc.server = _server[0];
+                this.irc.port = (_server[1] ? _server[1].trim() : 6667);
+                if(origin[2])
+                  this.irc.buffer=origin[2].trim();
+              }
             }
           }
         }

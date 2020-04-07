@@ -23,16 +23,26 @@ There are more fine tuned instructions below to further customize and improve yo
 ```
 git clone https://github.com/realrasengan/jbnc
 ```
+2. Edit config
+```
+cp example.conf jbnc.conf
+<edit> jbnc.conf
+```
+Values:
+```
+mode: gateway|bouncer
+bouncerPassword: leave blank for no password
+serverPort: if gateway mode, else ignored
+server: if gateway mode, else eignored
+bouncerPort: port for bnc,
+bouncerAdmin: admin pass
+```
 
-2. Run
+3. Run
 ```
 node bouncer.js &
 ```
 
-If you run an IRC server and simply want to enhance your IRC server to allow users to stay always on with just a password (and optional client buffer id):
-```
-node gateway.js &
-```
 
 #### SSL
 1. On Ubuntu
