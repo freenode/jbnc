@@ -2,8 +2,10 @@
 ## Bouncer with no authentication required written in nodejs with support for separate client buffers for playback history, an always-on connection, and SSL with stunnel.
 
 ### Purpose
-Bouncers are hard to configure.  I felt that we needed an easier one in this world.  This takes requires no configuration to connect!  This was a 1-day hackathon project and will improve over time.  Extremely WIP, but it works! :-)
+Bouncers are hard to configure.  I felt that we needed an easier one in this world.  This takes requires no configuration to connect!
 Join #jbnc on freenode to learn more!
+
+*Currently usable, but in alpha.  Please report bugs by creating an issue on github.*
 
 ### Example
 There is an example running at `jbnc.eyearesee.com` on SSL port 9998 (or plaintext 8888).  Point your IRC client at this and set a password like:
@@ -100,14 +102,7 @@ To get a list of commands:
 ```
 
 ### TODO
-
 Push notifications
-
-On Reconnect make sure existing connections dont see whois/names/etc.
-
-Self messages to queue for buffers
-
-toUpperCase for commands
 
 ### Copyright
 (c) 2020 Andrew Lee <andrew@imperialfamily.com>
