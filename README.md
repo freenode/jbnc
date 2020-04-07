@@ -101,9 +101,12 @@ To get a list of commands:
 ### TODO
 
 Push notifications
+
 On Reconnect make sure existing connections dont see whois/names/etc.
+
 Self messages to queue for buffers
-Buffer more than PRIVMSG
+
+toUpperCase for commands
 
 ### Copyright
 (c) 2020 Andrew Lee <andrew@imperialfamily.com>
