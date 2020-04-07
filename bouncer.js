@@ -182,13 +182,25 @@ server.on('connection', function(socket) {
             default:
               // supress joins of channels we are already in because some clients dont react properly.
               if(input[i].toString().substr(0,4)=="JOIN") {
-                channels=input[i].toString().trim().substr(5).split(",");
+                command=input[i].toString().trim().split(" ");
+                channels=command[1].split(",");
+                if(command[2])
+                  passwords=command[2].split(",");
+                l=0;
                 for(m=0;m<channels.length;m++) {
                   if(connections[this.hash].channels[channels[m].trim().toUpperCase()]) {
+                    if(command[2] && l<passwords.length)
+                      l++;
                     continue;
                   }
-                  else
-                    connections[this.hash].write("JOIN "+channels[m].trim().toUpperCase()+"\n");
+                  else {
+                    if(command[2] && l<passwords.length) {
+                      connections[this.hash].write("JOIN "+channels[m].trim().toUpperCase()+" "+passwords[l]+"\n");
+                      l++;
+                    }
+                    else
+                      connections[this.hash].write("JOIN "+channels[m].trim().toUpperCase()+"\n");
+                  }
                 }
                 break;
               }

@@ -104,6 +104,14 @@ To get a list of commands:
 ### TODO
 Push notifications
 
+Admin Panel
+
+ - Get User count
+
+ - Get Connection count
+
+ - Disconnect user
+
 ### Copyright
 (c) 2020 Andrew Lee <andrew@imperialfamily.com>
 All Rights Reserved.
