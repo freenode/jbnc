@@ -16,6 +16,7 @@ else process.exit(1);
 var BOUNCER_PASSWORD = config.bouncerPassword;
 var SERVER_PORT = config.mode=='gateway'?config.serverPort:0;
 var SERVER = config.mode=='gateway'?config.server:'';
+var DEBUG = config.debug;
 
 // Track IRC (Server) Connections
 var connections={};
@@ -61,6 +62,8 @@ server.on('connection', function(socket) {
       input=input.split("\n");
       this._buffer='';
       for(i=0;i<input.length;i++) {
+        if(DEBUG)
+          console.log(">" +input[i]);
         let commands=input[i].split(" ");
         let command=commands[0].toUpperCase();
         if(!this.connected && !this.badauth) {
@@ -128,7 +131,6 @@ server.on('connection', function(socket) {
             case 'CAP': // not RFC1459 Compliant but some clients added extraofficial capabilities
               break;
             default:
-              this.end();
               break;
           }
         }
@@ -363,9 +365,12 @@ function clientConnect(socket) {
         this._buffer='';
         lines= _d.split("\n");
         for(n=0;n<lines.length;n++) {
+          if(DEBUG)
+            console.log("< "+lines[n]);
           data = lines[n].split(" ");
           switch(data[1]) {
             case '001':
+
               if(!this.authenticated) {
                 this.authenticated=true;
                 this.name_original=data[2];
@@ -502,7 +507,9 @@ function clientConnect(socket) {
               break;
             case 'JOIN':
               _nick = data[0].substr(1).split("!")[0];
-              _channels = data[2].substr(1).trim().toUpperCase().split(",");
+              _channels = data[2].substr(0).trim().toUpperCase().split(",");
+              if(data[2].indexOf(":")!=-1)
+                _channels = data[2].substr(1).trim().toUpperCase().split(",");
               for(x=0;x<_channels.length;x++) {
                 _channel=_channels[x];
                 if(_nick==this.nick) {
@@ -645,7 +652,9 @@ function clientConnect(socket) {
       this.destroy();
     });
   }
-  else
+  else {
+console.log("hi4");
     socket.end();
+  }
 }
 
