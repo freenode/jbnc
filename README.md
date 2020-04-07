@@ -3,6 +3,7 @@
 
 ### Purpose
 Bouncers are hard to configure.  I felt that we needed an easier one in this world.  This takes requires no configuration to connect!  This was a 1-day hackathon project and will improve over time.  Extremely WIP, but it works! :-)
+Join #jbnc on freenode to learn more!
 
 ### Example
 There is an example running at `jbnc.eyearesee.com` on SSL port 9998 (or plaintext 8888).  Point your IRC client at this and set a password like:
