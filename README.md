@@ -7,13 +7,6 @@ Join #jbnc on freenode to learn more!
 
 *Currently usable, but in alpha.  Please report bugs by creating an issue on github.*
 
-### Example
-There is an example running at `jbnc.eyearesee.com` on SSL port 9998 (or plaintext 8888).  Point your IRC client at this and set a password like:
-```
-SomePasswordy89153/irc.dal.net:+6697
-```
-There are more fine tuned instructions below to further customize and improve your experience.
-
 ### Features
 - Always on connection to IRC
 - No registration or account required
