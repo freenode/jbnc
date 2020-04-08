@@ -1,18 +1,21 @@
 # jbnc
-## Bouncer with no authentication required written in nodejs with support for separate client buffers for playback history, an always-on connection, and SSL with stunnel.
+## IRC Bouncer/IRC Gateway with no authentication required written in nodejs with support for separate client buffers for playback history, an always-on connection, and SSL in and out.
+
+## This is the missing link for IRC.
 
 ### Purpose
-Bouncers are hard to configure.  I felt that we needed an easier one in this world.  This takes requires no configuration to connect!
+Bouncers are hard to configure.  I felt that we needed an easier one in this world.  This takes requires no configuration to connect!  Just set a password!
 Join #jbnc on freenode to learn more!
 
-*Currently usable, but in alpha.  Please report bugs by creating an issue on github.*
+*Currently usable, but in alpha test.  Please report bugs by creating an issue on github.  I'm using it as my daily driver.*
 
 ### Features
 - Always on connection to IRC
 - No registration or account required
-- Separate buffers for clients possible
+- Separate buffers for clients
 - SSL with stunnel
-- Tracks if your nick is changed, updates.
+- Works with any RFC 1459 Compatible Client
+- ***Gateway Mode for IRC Servers and Networks (See Below)***
 
 ### Setup / Installation
 1. Clone the repo
@@ -35,8 +38,14 @@ bouncerAdmin: admin pass
 ```
 
 3. Run
+To use the default jbnc.conf in the same folder:
 ```
 node bouncer.js &
+```
+
+To use another config file:
+```
+node bouncer.js somefile.conf &
 ```
 
 
@@ -58,25 +67,20 @@ client = no
 accept = 9998
 connect = 8888
 ```
+4. Run!
 
 ### IRC Client
-You just need to set your password:
-For an open bouncer
+You just need to set your password in your jbnc config and then setup your IRC client:
+Just put this in your password:
 ```
-PasswordGoesHere/ServerGoesHere
+YourServerPassword||ConnectionPasswordGoesHere/ServerGoesHere
 ```
-
-For a password protected one
-```
-ServerPassword||PasswordGoesHere/ServerGoesHere
-```
-
 To save clientbuffers for your client
 ```
-PasswordGoesHere/ServerGoesHere/deviceid
+YourServerPassword||ConnectionPasswordGoesHere/ServerGoesHere/deviceid
 ```
 
-Here is an example for a desktop and mobile setup with a password protected server connecting to DALnet:
+Here is an example for a desktop and mobile setup with a password protected server (password: dragon) connecting to DALnet:
 ```
 dragon||AJFiej2fn2345/irc.dal.net:6667/desktop
 dragon||AJFiej2fn2345/irc.dal.net:6667/mobile
@@ -93,6 +97,27 @@ To get a list of commands:
 ```
 /jbnc
 ```
+
+## Gateway Mode
+Enable gateway mode and run on the same box as your IRCd to instantly give all your users always on connectivity and seamless synchronization across all devices.
+
+1. Edit the config file and use gateway mode instead of bouncer.
+
+2. Run
+
+### Gateway Mode Setup on Client Side
+
+If you are running jbnc on the same machine as your irc server, let's say irc.example.com, then the only difference would be that your users would need to:
+
+1. Use a different port (8888 default for plaintext and 9998 default for SSL)
+
+2. Enter a password in their IRC client.  They make up the password and use it to identify to their connection.
+```
+SomePassword/buffername
+```
+
+An example buffername could be 'desktop' and on the mobile phone could be 'mobile.'
+
 
 ### TODO
 Push notifications
