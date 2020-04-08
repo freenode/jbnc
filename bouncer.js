@@ -665,7 +665,6 @@ function clientConnect(socket) {
     });
   }
   else {
-console.log("hi4");
     socket.end();
   }
 }
