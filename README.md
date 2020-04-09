@@ -19,11 +19,11 @@ Join #jbnc on freenode to learn more!
 
 ### Compatibility
 Works on:
-- EFnet
+- Freenode
 - Rizon
 - DALnet
-- Freenode
 - OFTC
+- EFnet
 - Any RFC1459 Compliant Network/Server
 
 ### Setup / Installation
