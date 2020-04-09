@@ -33,6 +33,7 @@ mode: gateway|bouncer
 bouncerPassword: leave blank for no password
 serverPort: if gateway mode, else ignored
 server: if gateway mode, else eignored
+webircPassword: if its there, it will try webirc authentication
 bouncerPort: port for bnc,
 bouncerAdmin: admin pass
 ```
