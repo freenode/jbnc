@@ -140,30 +140,7 @@ server.on('connection', function(socket) {
                 }
               }
               break;
-            case 'CAP': // not RFC1459 Compliant but some clients added extraofficial capabilities
-              switch(commands[1]) {
-                case 'LS':
-                  this.write("CAP * LS :znc.in/self-message\n");
-                  this.cap=true;
-                  break;
-                case 'REQ':
-                  if(commands[2].substr(1).trim()=="znc.in/self-message") {
-                    this.write("CAP * ACK znc.in/self-message\n");
-                  }
-                  else
-                    this.write("CAP * NAK "+commands[2]+"\n");
-                  break;
-                case 'END':
-                  if(this.capready) {
-                    if(connections[socket.hash]) {
-                      clientReconnect(this);
-                    }
-                    else {
-                      clientConnect(this);
-                    }
-                  }
-                  break;
-              }
+            case 'CAP': // not RFC1459 Compliant - breaks clients
               break;
             default:
               break;
