@@ -127,6 +127,7 @@ server.on('connection', function(socket) {
                 this.irc.realname = input[i].split(" :").pop().trim();
                 if(BOUNCER_USER.length>0 && this.irc.user!=BOUNCER_USER) {
                   this.write(":*jbnc NOTICE * :*** Incorrect Username ***\n");
+                  this.end();
                 }
                 this.hash=hash(this.irc.nick+this.irc.user+this.irc.password+this.irc.server+this.irc.port.toString());
                 if(connections[socket.hash]) {
