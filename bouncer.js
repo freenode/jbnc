@@ -14,6 +14,7 @@ else process.exit(1);
 
 // Set config vars
 const BOUNCER_PORT = config.bouncerPort?config.bouncerPort:8888;
+const BOUNCER_USER = config.bouncerUser?config.bouncerUser:'';
 const BOUNCER_PASSWORD = config.bouncerPassword?config.bouncerPassword:'';
 const BOUNCER_ADMIN = config.bouncerAdmin?config.bouncerAdmin:'';
 const BOUNCER_MODE = config.mode?config.mode:'bouncer';
@@ -124,6 +125,9 @@ server.on('connection', function(socket) {
               if(commands.length >= 5) {
                 this.irc.user = commands[1].trim();
                 this.irc.realname = input[i].split(" :").pop().trim();
+                if(BOUNCER_USER.length>0 && this.irc.user!=BOUNCER_USER) {
+                  this.write(":*jbnc NOTICE * :*** Incorrect Username ***\n");
+                }
                 this.hash=hash(this.irc.nick+this.irc.user+this.irc.password+this.irc.server+this.irc.port.toString());
                 if(connections[socket.hash]) {
                   clientReconnect(this);

@@ -31,7 +31,7 @@ Works on:
 ```
 git clone https://github.com/realrasengan/jbnc
 ```
-2. Edit config
+2. Edit config (there are different example.confs for different use cases)
 ```
 cp example.conf jbnc.conf
 <edit> jbnc.conf
