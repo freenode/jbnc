@@ -1,4 +1,4 @@
-// jbnc v0.2
+// jbnc v0.3
 // Copyright (C) 2020 Andrew Lee <andrew@imperialfamily.com>
 // All Rights Reserved.
 const tls = require('tls');
@@ -7,9 +7,9 @@ const fs = require('fs');
 const crypto = require("crypto");
 
 // Load jbnc.conf
-_config = process.argv[1]?process.argv[1]:"jbnc.conf";
+_config = process.argv[2]?process.argv[2]:"jbnc.conf";
 var config = {};
-if(fs.existsSync(_config)) config = JSON.parse(fs.readFileSync("jbnc.conf"));
+if(fs.existsSync(_config)) config = JSON.parse(fs.readFileSync(_config));
 else process.exit(1);
 
 // Set config vars
@@ -43,6 +43,9 @@ server.on('connection', function(socket) {
 
   // Miscellaneous
   socket.clientbuffer='default';
+  socket.cap=false; // IRCv3 CAP (only znc.in/self-message)
+  socket.capready=false;
+  socket.admin=false;  // Is user an admin
   users++;
 
   // Temp Buffer
@@ -63,7 +66,7 @@ server.on('connection', function(socket) {
       this._buffer='';
       for(i=0;i<input.length;i++) {
         if(DEBUG)
-          console.log(">" +input[i]);
+          console.log("<" +input[i]);
         let commands=input[i].split(" ");
         let command=commands[0].toUpperCase();
         if(!this.connected && !this.badauth) {
@@ -120,15 +123,43 @@ server.on('connection', function(socket) {
                 this.irc.user = commands[1].trim();
                 this.irc.realname = input[i].split(" :").pop().trim();
                 this.hash=hash(this.irc.nick+this.irc.user+this.irc.password+this.irc.server+this.irc.port.toString());
-                if(connections[socket.hash]) {
-                  clientReconnect(this);
+                if(!this.cap) {
+                  if(connections[socket.hash]) {
+                    clientReconnect(this);
+                  }
+                  else {
+                    clientConnect(this);
+                  }
                 }
                 else {
-                  clientConnect(this);
+                  this.capready=true;
                 }
               }
               break;
             case 'CAP': // not RFC1459 Compliant but some clients added extraofficial capabilities
+              switch(commands[1]) {
+                case 'LS':
+                  this.write("CAP * LS :znc.in/self-message\n");
+                  this.cap=true;
+                  break;
+                case 'REQ':
+                  if(commands[2].substr(1).trim()=="znc.in/self-message") {
+                    this.write("CAP * ACK znc.in/self-message\n");
+                  }
+                  else
+                    this.write("CAP * NAK "+commands[2]+"\n");
+                  break;
+                case 'END':
+                  if(this.capready) {
+                    if(connections[socket.hash]) {
+                      clientReconnect(this);
+                    }
+                    else {
+                      clientConnect(this);
+                    }
+                  }
+                  break;
+              }
               break;
             default:
               break;
@@ -136,9 +167,14 @@ server.on('connection', function(socket) {
         }
         else if(this.connected && !this.badauth) {
           command = input[i].toString().split(" ");
-          switch(command[0].toUpperCase()) {
+          switch(command[0].toUpperCase().trim()) {
             case 'QUIT':
               this.end();
+              break;
+            case 'NICK':
+              if(this.hash && connections[this.hash] && command[1]) {
+                connections[this.hash].write("NICK "+command[1]+"\n");
+              }
               break;
             case 'JBNC':
               if(!command[1]) {
@@ -148,10 +184,108 @@ server.on('connection', function(socket) {
                 this.write(":*jbnc NOTICE * :Commands:\n");
                 this.write(":*jbnc NOTICE * :QUIT - Disconnects and deletes your profile\n");
                 this.write(":*jbnc NOTICE * :PASS - Change your password\n");
+                if(!this.admin)
+                  this.write(":*jbnc NOTICE * :ADMIN - Get admin access\n");
+                else {
+                  this.write(":*jbnc NOTICE * :STATS - Get user and connection count\n");
+                  this.write(":*jbnc NOTICE * :LOAD - Get system Load Information\n");
+                  this.write(":*jbnc NOTICE * :WHOIS - Get info on a user\n");
+                  this.write(":*jbnc NOTICE * :KILL - Disconnect a user\n");
+                  this.write(":*jbnc NOTICE * :WHO - List all connected IRCs\n");
+                }
                 this.write(":*jbnc NOTICE * :***************\n");
               }
               else {
-                switch(command[1].toUpperCase()) {
+                switch(command[1].toUpperCase().trim()) {
+                  case 'STATS':
+                    if(this.admin) {
+                      this.write(":*jbnc NOTICE * :"+Object.keys(connections).length+" IRC Connections\n");
+                      this.write(":*jbnc NOTICE * :"+users+" connected devices\n");
+                    }
+                    else {
+                      this.write(":*jbnc NOTICE * :You do not have admin privileges.\n");
+                    }
+                    break;
+                  case 'LOAD':
+                    if(this.admin) {
+                      this.write(":*jbnc NOTICE * :"+fs.readFileSync("/proc/loadavg")+"\n");
+                    }
+                    else {
+                      this.write(":*jbnc NOTICE * :You do not have admin privileges.\n");
+                    }
+                    break;
+                  case 'KILL':
+                    if(this.admin) {
+                      if(command[2]) {
+                        if(connections[command[2]]) {
+                          key=command[2];
+                          this.write(":*jbnc NOTICE * :"+connections[key].nick_original+"!"+connections[key].user+"@"+connections[key].server+" has been disconnected\n");
+                          connections[key].end();
+                        }
+                        else {
+                          this.write(":*jbnc NOTICE * :No connection found by that hash.\n");
+                        }
+                      }
+                      else {
+                        this.write(":*jbnc NOTICE * :Syntax error\n");
+                        this.write(":*jbnc NOTICE * :KILL <user hash>\n");
+                      }
+                    }
+                    else {
+                      this.write(":*jbnc NOTICE * :You do not have admin privileges.\n");
+                    }
+                    break;
+                  case 'WHO':
+                    if(this.admin) {
+                      this.write(":*jbnc NOTICE * :Listing "+Object.keys(connections).length+" users...\n");
+                      for(key in connections) {
+                        if(connections.hasOwnProperty(key)) {
+                          this.write(":*jbnc NOTICE * :"+connections[key].nick_original+"!"+connections[key].user+"@"+connections[key].server+" ("+key+")\n");
+                        }
+                      }
+                    }
+                    else {
+                      this.write(":*jbnc NOTICE * :You do not have admin privileges.\n");
+                    }
+                    break;
+                  case 'WHOIS':
+                    if(this.admin) {
+                      if(command[2]) {
+                        if(connections[command[2]]) {
+                          key=command[2];
+                          this.write(":*jbnc NOTICE * :"+connections[key].nick_original+"!"+connections[key].user+"@"+connections[key].server+"\n");
+                          this.write(":*jbnc NOTICE * :Currently connected with "+connections[key].parents.length+" devices\n");
+                          this.write(":*jbnc NOTICE * :User is in "+Object.keys(connections[key].channels).length+" channels\n");
+                        }
+                        else {
+                          this.write(":*jbnc NOTICE * :No connection found by that hash.\n");
+                        }
+                      }
+                      else {
+                        this.write(":*jbnc NOTICE * :Syntax error\n");
+                        this.write(":*jbnc NOTICE * :WHOIS <user hash>\n");
+                      }
+                    }
+                    else {
+                      this.write(":*jbnc NOTICE * :You do not have admin privileges.\n");
+                    }
+                    break;
+                  case 'ADMIN':
+                    if(!command[2]) {
+                      this.write(":*jbnc NOTICE * :Syntax error\n");
+                      this.write(":*jbnc NOTICE * :ADMIN <admin password>\n");
+                    }
+                    else {
+                      if(command[2]==config.bouncerAdmin && config.bouncerAdmin.length>0) {
+                        this.write(":*jbnc NOTICE * :Password Accepted.\n");
+                        this.write(":*jbnc NOTICE * :You have been elevated to admin.\n");
+                        this.admin=true;
+                      }
+                      else {
+                        this.write(":*jbnc NOTICE * :Incorrect password..\n");
+                      }
+                    }
+                    break;
                   case 'QUIT':
                     this.write(":*jbnc NOTICE * :Sayonara.\n");
                     connections[this.hash].end();
@@ -172,13 +306,15 @@ server.on('connection', function(socket) {
                     }
                     else
                       this.write(":*jbnc NOTICE * :Syntax error.\n");
-                      break;
-                    default:
-                      this.write(":*jbnc NOTICE * :Unknown command.\n");
-                      break;
+                      this.write(":*jbnc NOTICE * :PASS <old password> <new password>.\n");
+                    break;
+                  default:
+                    this.write(":*jbnc NOTICE * :Unknown command.\n");
+                    break;
                 }
                 break;
               }
+              break;
             default:
               // supress joins of channels we are already in because some clients dont react properly.
               if(input[i].toString().substr(0,4)=="JOIN") {
@@ -195,11 +331,11 @@ server.on('connection', function(socket) {
                   }
                   else {
                     if(command[2] && l<passwords.length) {
-                      connections[this.hash].write("JOIN "+channels[m].trim().toUpperCase()+" "+passwords[l]+"\n");
+                      connections[this.hash].write("JOIN "+channels[m].trim()+" "+passwords[l]+"\n");
                       l++;
                     }
                     else
-                      connections[this.hash].write("JOIN "+channels[m].trim().toUpperCase()+"\n");
+                      connections[this.hash].write("JOIN "+channels[m].trim()+"\n");
                   }
                 }
                 break;
@@ -217,7 +353,7 @@ server.on('connection', function(socket) {
                   for(key in connections[this.hash].buffers) {
                     if(connections[this.hash].buffers.hasOwnProperty(key)) {
                       if(!connections[this.hash].buffers[key].connected) {
-                        connections[this.hash].buffers[key].data+=":"+connections[this.hash].nick+"!"+connections[this.hash].user+"@"+connections[this.hash].host+" "+input[i]+"\n";
+                        connections[this.hash].buffers[key].data+=":"+connections[this.hash].nick+"!"+connections[this.hash].ircuser+"@"+connections[this.hash].host+" "+input[i]+"\n";
                       }
                     }
                   }
@@ -250,10 +386,12 @@ server.on('connection', function(socket) {
         connections[this.hash].write("AWAY :jbnc\n");
       }
     }
+    users--;
     this.destroy();
   });
   socket.on('error', function(err) {
     console.log(err);
+    this.end();
   });
 });
 
@@ -283,7 +421,7 @@ function clientReconnect(socket) {
     if(connection.channels.hasOwnProperty(key)) {
       _channel=connection.channels[key];
 
-      socket.write(":"+connection.nick+"!~"+connection.user+"@"+connection.host+" JOIN :"+key+"\n");
+      socket.write(":"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN :"+_channel.name+"\n");
       _mode_params='';
       for(x=0;x<_channel.modes.length;x++) {
         switch(_channel.modes[x]) {
@@ -351,10 +489,11 @@ function clientConnect(socket) {
     connection.nick_original = socket.irc.nick;
     connection.password = socket.irc.password;
     connection.user = socket.irc.user;
+    connection.ircuser = socket.irc.user;
     connection.server = socket.irc.server;
     connection.port = socket.irc.port;
     connection.realname = socket.irc.realname;
-    connection.host = '';
+    connection.host = socket.remoteAddress.substr(0,7)=="::ffff:"?socket.remoteAddress.substr(7):socket.remoteAddress;
     connection.umode='';
     connection.motd='';
     connection.channels={};
@@ -366,8 +505,12 @@ function clientConnect(socket) {
     connection._getnames={};
 
     connection.on('connect',function() {
+      if(config.webircPassword.length>0) {
+        this.write('WEBIRC '+config.webircPassword+' '+this.user+' '+'jbnc'+" "+this.host+"\n");
+      }
       this.write('NICK '+this.nick+'\n');
       this.write('USER '+this.user+' localhost '+this.server+' :'+this.realname+'\n');
+      connections[hash(this.nick_original+this.user+this.password+this.server+this.port.toString())] = this;
     });
     connection.on('data', function(d){
       if(d.toString().substr(d.length-1)!="\n")
@@ -378,7 +521,7 @@ function clientConnect(socket) {
         lines= _d.split("\n");
         for(n=0;n<lines.length;n++) {
           if(DEBUG)
-            console.log("< "+lines[n]);
+            console.log("> "+lines[n]);
           data = lines[n].split(" ");
           switch(data[1]) {
             case '001':
@@ -386,11 +529,12 @@ function clientConnect(socket) {
               if(!this.authenticated) {
                 this.authenticated=true;
                 this.name_original=data[2];
-                if(lines[n].lastIndexOf("@")>0)
+                if(lines[n].lastIndexOf("@")>0) {
+                  this.ircuser=lines[n].substr(lines[n].lastIndexOf("!")+1,lines[n].lastIndexOf("@")-lines[n].lastIndexOf("!")-1);
                   this.host=lines[n].substr(lines[n].lastIndexOf("@")+1).trim();
+                }
                 else
                   this.host="jbnc";
-                connections[hash(this.nick_original+this.user+this.password+this.server+this.port.toString())] = this;
               }
             case '002':
             case '003':
@@ -518,29 +662,34 @@ function clientConnect(socket) {
               this.motd+=lines[n]+"\n";
               break;
             case 'JOIN':
-              _nick = data[0].substr(1).split("!")[0];
-              _channels = data[2].substr(0).trim().toUpperCase().split(",");
+              _temp = data[0].substr(1).split("!");
+              _nick = _temp[0];
+              if(_temp[1])
+                this.ircuser=_temp[1].split("@")[0];
+              _channels = data[2].substr(0).trim().split(",");
               if(data[2].indexOf(":")!=-1)
-                _channels = data[2].substr(1).trim().toUpperCase().split(",");
+                _channels = data[2].substr(1).trim().split(",");
               for(x=0;x<_channels.length;x++) {
                 _channel=_channels[x];
+                __channel=_channel.toUpperCase();
                 if(_nick==this.nick) {
-                  if(!this.channels[_channel]) {
-                    this.channels[_channel]={};
-                    this.channels[_channel].modes='';
-                    this.channels[_channel].topic='';
-                    this.channels[_channel].topic_set='';
-                    this.channels[_channel].topic_time=0;
-                    this.channels[_channel].key=null;
-                    this.channels[_channel].limit=null;
-                    this.channels[_channel].forward=null;
-                    this.channels[_channel].throttle=null;
-                    this.channels[_channel].names=[];
+                  if(!this.channels[__channel]) {
+                    this.channels[__channel]={};
+                    this.channels[__channel].modes='';
+                    this.channels[__channel].topic='';
+                    this.channels[__channel].topic_set='';
+                    this.channels[__channel].topic_time=0;
+                    this.channels[__channel].key=null;
+                    this.channels[__channel].limit=null;
+                    this.channels[__channel].forward=null;
+                    this.channels[__channel].throttle=null;
+                    this.channels[__channel].names=[];
+                    this.channels[__channel].name=_channel;
                   }
                 }
                 else {
-                  if(this.channels[_channel]) {
-                    this.channels[_channel].names[this.channels[_channel].names.length]=_nick;
+                  if(this.channels[__channel]) {
+                    this.channels[__channel].names[this.channels[__channel].names.length]=_nick;
                   }
                 }
               }
@@ -662,6 +811,9 @@ function clientConnect(socket) {
       this.buffers=false;
       delete connections[hash(this.nick+this.user+this.password+this.server+this.port.toString())];
       this.destroy();
+    });
+    connection.on('error', function(err) {
+      this.end();
     });
   }
   else {

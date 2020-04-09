@@ -120,15 +120,8 @@ An example buffername could be 'desktop' and on the mobile phone could be 'mobil
 
 
 ### TODO
-Push notifications
 
-Admin Panel
-
- - Get User count
-
- - Get Connection count
-
- - Disconnect user
+Beta Testing
 
 ### Copyright
 (c) 2020 Andrew Lee <andrew@imperialfamily.com>
