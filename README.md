@@ -17,6 +17,15 @@ Join #jbnc on freenode to learn more!
 - Works with any RFC 1459 Compatible Client
 - ***Gateway Mode for IRC Servers and Networks (See Below)***
 
+### Compatibility
+Works on:
+- EFnet
+- Rizon
+- DALnet
+- Freenode
+- OFTC
+- Any RFC1459 Compliant Network/Server
+
 ### Setup / Installation
 1. Clone the repo
 ```
