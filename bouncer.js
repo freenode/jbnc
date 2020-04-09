@@ -404,8 +404,11 @@ function clientReconnect(socket) {
   let connection=connections[socket.hash];
   connection.parents[connection.parents.length] = socket;
   socket.connected=true;
-  if(!connection.buffers[socket.clientbuffer])
+  newdevice=false;
+  if(!connection.buffers[socket.clientbuffer]) {
     connection.buffers[socket.clientbuffer]={data:'',connected:true};
+    newdevice=true;
+  }
   else
     connection.buffers[socket.clientbuffer].connected=true;
 
@@ -416,10 +419,13 @@ function clientReconnect(socket) {
     connection.write("AWAY\n");
     connection.connected=true;
   }
-  connection.write("LUSERS\n");
-  socket.write(":*jbnc 375 "+connection.nick+" :- Message of the Day -\n");
-  socket.write(connection.motd+"\n");
-  socket.write(":*jbnc 376 "+connection.nick+" :End of /MOTD command.\n");
+  if(newdevice) {
+    connection.write("LUSERS\n");
+    socket.write(":*jbnc 375 "+connection.nick+" :- Message of the Day -\n");
+    socket.write(connection.motd+"\n");
+    socket.write(":*jbnc 376 "+connection.nick+" :End of /MOTD command.\n");
+  }
+
   // Loop thru channels and send JOINs
   for(key in connection.channels) {
     if(connection.channels.hasOwnProperty(key)) {
