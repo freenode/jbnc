@@ -13,10 +13,14 @@ if(fs.existsSync(_config)) config = JSON.parse(fs.readFileSync(_config));
 else process.exit(1);
 
 // Set config vars
-var BOUNCER_PASSWORD = config.bouncerPassword;
-var SERVER_PORT = config.mode=='gateway'?config.serverPort:0;
-var SERVER = config.mode=='gateway'?config.server:'';
-var DEBUG = config.debug;
+const BOUNCER_PORT = config.bouncerPort?config.bouncerPort:8888;
+const BOUNCER_PASSWORD = config.bouncerPassword?config.bouncerPassword:'';
+const BOUNCER_ADMIN = config.bouncerAdmin?config.bouncerAdmin:'';
+const BOUNCER_MODE = config.mode?config.mode:'bouncer';
+const SERVER_WEBIRC = config.webircPassword?webircPassword:'';
+const SERVER_PORT = BOUNCER_MODE=='gateway'?(config.serverPort?config.serverPort:0):0;
+const SERVER = BOUNCER_MODE=='gateway'?(config.server?config.server:''):'';
+const DEBUG = config.debug?config.debug:false;
 
 // Track IRC (Server) Connections
 var connections={};
@@ -28,7 +32,7 @@ function hash(data) {
 
 // Bouncer Server
 const server = net.Server();
-server.listen(config.bouncerPort ? config.bouncerPort : 8888);
+server.listen(BOUNCER_PORT);
 var users=0;
 server.on('connection', function(socket) {
   // Used for auth
@@ -92,7 +96,7 @@ server.on('connection', function(socket) {
                   else
                     this.irc.password = origin[0];
 
-                  if(config.mode=="gateway") {
+                  if(BOUNCER_MODE=="gateway") {
                     if(origin.length!=1 && origin.length!=2)
                       this.end();
                     else {
@@ -276,7 +280,7 @@ server.on('connection', function(socket) {
                       this.write(":*jbnc NOTICE * :ADMIN <admin password>\n");
                     }
                     else {
-                      if(command[2]==config.bouncerAdmin && config.bouncerAdmin.length>0) {
+                      if(command[2]==BOUNCER_ADMIN && BOUNCER_ADMIN.length>0) {
                         this.write(":*jbnc NOTICE * :Password Accepted.\n");
                         this.write(":*jbnc NOTICE * :You have been elevated to admin.\n");
                         this.admin=true;
@@ -505,8 +509,8 @@ function clientConnect(socket) {
     connection._getnames={};
 
     connection.on('connect',function() {
-      if(config.webircPassword.length>0) {
-        this.write('WEBIRC '+config.webircPassword+' '+this.user+' '+'jbnc'+" "+this.host+"\n");
+      if(SERVER_WEBIRC.length>0) {
+        this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' '+'jbnc'+" "+this.host+"\n");
       }
       this.write('NICK '+this.nick+'\n');
       this.write('USER '+this.user+' localhost '+this.server+' :'+this.realname+'\n');
