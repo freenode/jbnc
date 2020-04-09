@@ -1,0 +1,8 @@
+cmd: /usr/bin/node /path/to/jbnc/bouncer.js /path/to/jbnc/jbnc.conf
+env:
+    ENVIRONMENT: production
+log:
+    file: /var/log/bouncer.log
+    age: 86400    # seconds
+    num: 7        # int
+    size: 1000    # MegaBytes

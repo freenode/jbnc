@@ -58,6 +58,13 @@ To use another config file:
 node bouncer.js somefile.conf &
 ```
 
+#### Keep it running forever (no downtime)
+Sometimes stunnel crashes, so in order to keep things running 24/7/365, there's a great app called [immortal](https://immortal.run/).
+
+The immortaldir files are located in this repo (stunnel.yml and jbnc.yml).
+
+Note: To use immortal on ubuntu, after following the steps on the page, please be sure to `systemctl enable immortaldir` as well as start.
+
 
 #### SSL
 1. On Ubuntu

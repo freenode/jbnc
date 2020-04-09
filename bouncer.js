@@ -47,8 +47,6 @@ server.on('connection', function(socket) {
 
   // Miscellaneous
   socket.clientbuffer='default';
-  socket.cap=false; // IRCv3 CAP (only znc.in/self-message)
-  socket.capready=false;
   socket.admin=false;  // Is user an admin
   users++;
 
@@ -127,16 +125,11 @@ server.on('connection', function(socket) {
                 this.irc.user = commands[1].trim();
                 this.irc.realname = input[i].split(" :").pop().trim();
                 this.hash=hash(this.irc.nick+this.irc.user+this.irc.password+this.irc.server+this.irc.port.toString());
-                if(!this.cap) {
-                  if(connections[socket.hash]) {
-                    clientReconnect(this);
-                  }
-                  else {
-                    clientConnect(this);
-                  }
+                if(connections[socket.hash]) {
+                  clientReconnect(this);
                 }
                 else {
-                  this.capready=true;
+                  clientConnect(this);
                 }
               }
               break;
