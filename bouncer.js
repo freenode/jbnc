@@ -18,7 +18,7 @@ const BOUNCER_USER = config.bouncerUser?config.bouncerUser:'';
 var BOUNCER_PASSWORD = config.bouncerPassword?config.bouncerPassword:'';
 var BOUNCER_ADMIN = config.bouncerAdmin?config.bouncerAdmin:'';
 const BOUNCER_MODE = config.mode?config.mode:'bouncer';
-const SERVER_WEBIRC = config.webircPassword?webircPassword:'';
+const SERVER_WEBIRC = config.webircPassword?config.webircPassword:'';
 const SERVER_PORT = BOUNCER_MODE=='gateway'?(config.serverPort?config.serverPort:0):0;
 const SERVER = BOUNCER_MODE=='gateway'?(config.server?config.server:''):'';
 const DEBUG = config.debug?config.debug:false;
