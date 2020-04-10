@@ -695,8 +695,9 @@ function clientConnect(socket) {
             case 'JOIN':
               _temp = data[0].substr(1).split("!");
               _nick = _temp[0];
-              if(_temp[1])
+              if(_temp[1] && this.nick==_nick) {
                 this.ircuser=_temp[1].split("@")[0];
+              }
               _channels = data[2].substr(0).trim().split(",");
               if(data[2].indexOf(":")!=-1)
                 _channels = data[2].substr(1).trim().split(",");
