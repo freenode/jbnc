@@ -15,13 +15,24 @@ else process.exit(1);
 // Set config vars
 const BOUNCER_PORT = config.bouncerPort?config.bouncerPort:8888;
 const BOUNCER_USER = config.bouncerUser?config.bouncerUser:'';
-const BOUNCER_PASSWORD = config.bouncerPassword?config.bouncerPassword:'';
-const BOUNCER_ADMIN = config.bouncerAdmin?config.bouncerAdmin:'';
+var BOUNCER_PASSWORD = config.bouncerPassword?config.bouncerPassword:'';
+var BOUNCER_ADMIN = config.bouncerAdmin?config.bouncerAdmin:'';
 const BOUNCER_MODE = config.mode?config.mode:'bouncer';
 const SERVER_WEBIRC = config.webircPassword?webircPassword:'';
 const SERVER_PORT = BOUNCER_MODE=='gateway'?(config.serverPort?config.serverPort:0):0;
 const SERVER = BOUNCER_MODE=='gateway'?(config.server?config.server:''):'';
 const DEBUG = config.debug?config.debug:false;
+
+
+// Reload passwords on sighup
+process.on('SIGHUP',function() {
+  if(fs.existsSync(_config)) config = JSON.parse(fs.readFileSync(_config));
+  else process.exit(1);
+
+  BOUNCER_PASSWORD=config.bouncerPassword?config.bouncerPassword:'';
+  BOUNCER_ADMIN=config.bouncerAdmin?config.bouncerAdmin:'';
+});
+
 
 // Track IRC (Server) Connections
 var connections={};
@@ -95,6 +106,12 @@ server.on('connection', function(socket) {
                   else
                     this.irc.password = origin[0];
 
+                  if(this.irc.password.length < 8) {
+                    this.write(":*jbnc NOTICE * :*** Password too short (min length 8) ***\n");
+                    this.badauth=true;
+                    this.end();
+                  }
+
                   if(BOUNCER_MODE=="gateway") {
                     if(origin.length!=1 && origin.length!=2)
                       this.end();
@@ -116,13 +133,28 @@ server.on('connection', function(socket) {
                   }
                 }
               }
+              else {
+                this.write(":*jbnc NOTICE * :*** This is a JBNC Server.  You must set a password.\n");
+                this.badauth=true;
+                this.end();
+              }
               break;
             case 'NICK':
-              if(commands[1])
+              if(!this.irc.password) {
+                this.write(":*jbnc NOTICE * :*** This is a JBNC Server.  You must set a password.\n");
+                this.badauth=true;
+                this.end();
+              }
+              else if(commands[1])
                 this.irc.nick=commands[1].trim();
               break;
             case 'USER':
-              if(commands.length >= 5) {
+              if(!this.irc.password) {
+                this.write(":*jbnc NOTICE * :*** This is a JBNC Server.  You must set a password.\n");
+                this.badauth=true;
+                this.end();
+              }
+              else if(commands.length >= 5) {
                 this.irc.user = commands[1].trim();
                 this.irc.realname = input[i].split(" :").pop().trim();
                 if(BOUNCER_USER.length>0 && this.irc.user!=BOUNCER_USER) {
@@ -138,6 +170,11 @@ server.on('connection', function(socket) {
                     clientConnect(this);
                   }
                 }
+              }
+              else {
+                this.write(":*jbnc NOTICE * :*** Your IRC client is faulty. ***\n");
+                this.badauth=true;
+                this.end();
               }
               break;
             case 'CAP': // not RFC1459 Compliant - breaks clients
@@ -165,6 +202,7 @@ server.on('connection', function(socket) {
                 this.write(":*jbnc NOTICE * :Commands:\n");
                 this.write(":*jbnc NOTICE * :QUIT - Disconnects and deletes your profile\n");
                 this.write(":*jbnc NOTICE * :PASS - Change your password\n");
+                this.write(":*jbnc NOTICE * :CONN - Show which devices are connected to your bouncer user connection\n");
                 if(!this.admin)
                   this.write(":*jbnc NOTICE * :ADMIN - Get admin access\n");
                 else {
@@ -227,6 +265,12 @@ server.on('connection', function(socket) {
                     }
                     else {
                       this.write(":*jbnc NOTICE * :You do not have admin privileges.\n");
+                    }
+                    break;
+                  case 'CONN':
+                    this.write(":*jbnc NOTICE * :There are "+ connections[this.hash].parents.length +" connections to your bouncer user connection.\n");
+                    for(x=0;x<connections[this.hash].parents.length;x++) {
+                      this.write(":*jbnc NOTICE * :"+connections[this.hash].parents[x].clientbuffer+" ("+connections[this.hash].parents[x].remoteAddress+")\n");
                     }
                     break;
                   case 'WHOIS':

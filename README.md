@@ -15,6 +15,7 @@ Join #jbnc on freenode to learn more!
 - Separate buffers for clients
 - SSL with stunnel
 - Works with any RFC 1459 Compatible Client
+- Password can be changed in the config and a HUP will reload the passwords.
 - ***Gateway Mode for IRC Servers and Networks (See Below)***
 
 ### Compatibility
