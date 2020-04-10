@@ -129,12 +129,14 @@ server.on('connection', function(socket) {
                   this.write(":*jbnc NOTICE * :*** Incorrect Username ***\n");
                   this.end();
                 }
-                this.hash=hash(this.irc.nick+this.irc.user+this.irc.password+this.irc.server+this.irc.port.toString());
-                if(connections[socket.hash]) {
-                  clientReconnect(this);
-                }
                 else {
-                  clientConnect(this);
+                  this.hash=hash(this.irc.nick+this.irc.user+this.irc.password+this.irc.server+this.irc.port.toString());
+                  if(connections[socket.hash]) {
+                    clientReconnect(this);
+                  }
+                  else {
+                    clientConnect(this);
+                  }
                 }
               }
               break;
@@ -328,7 +330,7 @@ server.on('connection', function(socket) {
                     connections[this.hash].parents[m].write(":"+connections[this.hash].nick+" "+input[i].toString() + "\n");
                   }
                 }
-                if(input[i].toString().substr(0,7)=="PRIVMSG" || input[i].toString().substr(0,6)=="NOTICE") {
+                if(input[i].toString().substr(0,7)=="PRIVMSG" || input[i].toString().substr(0,6)=="NOTICE" || input[i].toString().substr(0,7)=="WALLOPS" || input[i].toString().substr(0,7)=="GLOBOPS") {
                   for(key in connections[this.hash].buffers) {
                     if(connections[this.hash].buffers.hasOwnProperty(key)) {
                       if(!connections[this.hash].buffers[key].connected) {
@@ -776,7 +778,7 @@ function clientConnect(socket) {
             this.parents[m].write(lines[n]+"\n");
 
           // store clientbuf if not connected
-          if(lines[n].indexOf("PRIVMSG")>=0 || lines[n].indexOf("NOTICE")>=0) {
+          if(lines[n].indexOf("PRIVMSG")>=0 || lines[n].indexOf("NOTICE")>=0 || lines[n].indexOf("WALLOPS")>=0 || lines[n].indexOf("GLOBOPS")>=0) {
             for(key in this.buffers) {
               if(this.buffers.hasOwnProperty(key)) {
                 if(!this.buffers[key].connected) {
