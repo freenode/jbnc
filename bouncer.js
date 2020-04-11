@@ -5,6 +5,8 @@ const tls = require('tls');
 const net = require('net');
 const fs = require('fs');
 const crypto = require("crypto");
+const dns = require('dns');
+const reverse = require('util').promisify(dns.reverse);
 
 // Load jbnc.conf
 _config = process.argv[2]?process.argv[2]:"jbnc.conf";
@@ -535,9 +537,14 @@ function clientConnect(socket) {
     connection._buffer='';
     connection._getnames={};
 
-    connection.on('connect',function() {
+    connection.on('connect',async function() {
       if(SERVER_WEBIRC.length>0) {
-        this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' '+'jbnc'+" "+this.host+"\n");
+        try {
+          _reverse_ip = await reverse(this.host);
+        } catch(e) {
+          _reverse_ip = this.host;
+        }
+        this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' '+_reverse_ip+" "+this.host+"\n");
       }
       this.write('NICK '+this.nick+'\n');
       this.write('USER '+this.user+' localhost '+this.server+' :'+this.realname+'\n');
