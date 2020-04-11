@@ -82,6 +82,7 @@ key  = /etc/stunnel/privkey.pem
 client = no
 
 [jbnc]
+protocol = proxy
 accept = 9998
 connect = 8888
 ```
