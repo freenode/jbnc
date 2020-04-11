@@ -46,6 +46,7 @@ server: if gateway mode, else eignored
 webircPassword: if its there, it will try webirc authentication
 bouncerPort: port for bnc,
 bouncerAdmin: admin pass
+bouncerTimeout: how long until after no clients connected will the user stay connected
 ```
 
 3. Run

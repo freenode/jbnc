@@ -20,6 +20,7 @@ const BOUNCER_USER = config.bouncerUser?config.bouncerUser:'';
 var BOUNCER_PASSWORD = config.bouncerPassword?config.bouncerPassword:'';
 var BOUNCER_ADMIN = config.bouncerAdmin?config.bouncerAdmin:'';
 const BOUNCER_MODE = config.mode?config.mode:'bouncer';
+const BOUNCER_TIMEOUT = config.bouncerTimeout?config.bouncerTimeout:0;
 const SERVER_WEBIRC = config.webircPassword?config.webircPassword:'';
 const SERVER_PORT = BOUNCER_MODE=='gateway'?(config.serverPort?config.serverPort:0):0;
 const SERVER = BOUNCER_MODE=='gateway'?(config.server?config.server:''):'';
@@ -417,6 +418,9 @@ server.on('connection', function(socket) {
       if(connections[this.hash].parents.length==0) {
         connections[this.hash].connected=false;
         connections[this.hash].write("AWAY :jbnc\n");
+        if(BOUNCER_TIMEOUT!=0 && BOUNCER_TIMEOUT!=null) {
+          connections[this.hash].gone=setTimeout(function(x){connections[x].end();},BOUNCER_TIMEOUT*1000,this.hash);
+        }
       }
     }
     users--;
@@ -432,6 +436,7 @@ server.on('connection', function(socket) {
 function clientReconnect(socket) {
   let connection=connections[socket.hash];
   connection.parents[connection.parents.length] = socket;
+  clearTimeout(connection.gone);
   socket.connected=true;
   newdevice=false;
   if(!connection.buffers[socket.clientbuffer]) {
