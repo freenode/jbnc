@@ -539,6 +539,8 @@ function clientConnect(socket) {
 
     connection.on('connect',async function() {
       if(SERVER_WEBIRC.length>0) {
+        if(this.host==":1")
+          this.host="127.0.0.1";
         try {
           _reverse_ip = await reverse(this.host);
         } catch(e) {
