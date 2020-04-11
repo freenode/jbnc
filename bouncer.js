@@ -137,7 +137,7 @@ server.on('connection', function(socket) {
                       this.irc.server = _server[0];
                       this.irc.port = (_server[1] ? _server[1].trim() : 6667);
                       if(origin[2])
-                        this.irc.buffer=origin[2].trim();
+                        this.clientbuffer=origin[2].trim();
                     }
                   }
                 }
@@ -414,12 +414,14 @@ server.on('connection', function(socket) {
         if(connections[this.hash].parents[i]==this)
           break;
       }
-      connections[this.hash].parents.splice(i,1);
-      if(connections[this.hash].parents.length==0) {
-        connections[this.hash].connected=false;
-        connections[this.hash].write("AWAY :jbnc\n");
-        if(BOUNCER_TIMEOUT!=0 && BOUNCER_TIMEOUT!=null) {
-          connections[this.hash].gone=setTimeout(function(x){connections[x].end();},BOUNCER_TIMEOUT*1000,this.hash);
+      if(i<connections[this.hash].parents.length) {
+        connections[this.hash].parents.splice(i,1);
+        if(connections[this.hash].parents.length==0) {
+          connections[this.hash].connected=false;
+          connections[this.hash].write("AWAY :jbnc\n");
+          if(BOUNCER_TIMEOUT!=0 && BOUNCER_TIMEOUT!=null) {
+            connections[this.hash].gone=setTimeout(function(x){connections[x].end();},BOUNCER_TIMEOUT*1000,this.hash);
+          }
         }
       }
     }
@@ -445,7 +447,6 @@ function clientReconnect(socket) {
   }
   else
     connection.buffers[socket.clientbuffer].connected=true;
-
   socket.write(connection.connectbuf+"\n");
   if(connection.nick!=socket.irc.nick)
     socket.write(":"+connection.nick_original+" NICK "+connection.nick+"\n");
@@ -499,7 +500,7 @@ function clientReconnect(socket) {
   }
 
   socket.write(":"+connection.nick+" MODE "+connection.nick+" :+"+connection.umode+"\n");
-  if(connection.buffers[socket.clientbuffer].data.length>0) {
+  if(connection.buffers[socket.clientbuffer] && connection.buffers[socket.clientbuffer].data && connection.buffers[socket.clientbuffer].data.length>0) {
     socket.write(connection.buffers[socket.clientbuffer].data+"\n");
     connection.buffers[socket.clientbuffer].data='';
   }
