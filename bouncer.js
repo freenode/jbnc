@@ -532,7 +532,7 @@ function clientConnect(socket) {
     connection.server = socket.irc.server;
     connection.port = socket.irc.port;
     connection.realname = socket.irc.realname;
-    connection.host = socket.host!=null:socket.host?(socket.remoteAddress.substr(0,7)=="::ffff:"?socket.remoteAddress.substr(7):socket.remoteAddress);
+    connection.host = socket.host!=null?socket.host:(socket.remoteAddress.substr(0,7)=="::ffff:"?socket.remoteAddress.substr(7):socket.remoteAddress);
     connection.umode='';
     connection.motd='';
     connection.channels={};
