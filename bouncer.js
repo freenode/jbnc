@@ -62,6 +62,7 @@ server.on('connection', function(socket) {
   // Miscellaneous
   socket.clientbuffer='default';
   socket.admin=false;  // Is user an admin
+  socket.host=null;
   users++;
 
   // Temp Buffer
@@ -87,6 +88,11 @@ server.on('connection', function(socket) {
         let command=commands[0].toUpperCase();
         if(!this.connected && !this.badauth) {
           switch(command) {
+            case 'PROXY':
+              if(commands[5] && !this.irc.password) {
+                this.host=commands[2];
+              }
+              break;
             case 'PASS':
               if(commands[1]) {
                 if(BOUNCER_PASSWORD.length>0 && commands[1].split("||")[0]!=BOUNCER_PASSWORD) {
@@ -526,7 +532,7 @@ function clientConnect(socket) {
     connection.server = socket.irc.server;
     connection.port = socket.irc.port;
     connection.realname = socket.irc.realname;
-    connection.host = socket.remoteAddress.substr(0,7)=="::ffff:"?socket.remoteAddress.substr(7):socket.remoteAddress;
+    connection.host = socket.host!=null:socket.host?(socket.remoteAddress.substr(0,7)=="::ffff:"?socket.remoteAddress.substr(7):socket.remoteAddress);
     connection.umode='';
     connection.motd='';
     connection.channels={};
