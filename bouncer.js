@@ -71,6 +71,7 @@ server.on('connection', function(socket) {
   // Temp Buffer
   socket._buffer='';
   socket._outbuffer=''; // Just used at the beginning only
+  socket.hostonce='';
 
   socket.on('data', function(chunk) {
     let _chunk = chunk.toString();
@@ -96,6 +97,9 @@ server.on('connection', function(socket) {
                 if(commands[5] && !this.irc.password) {
                   this.host=commands[2];
                 }
+              }
+              else {
+                this.hostonce=commands[2];
               }
               break;
             case 'PASS':
@@ -562,7 +566,10 @@ function clientConnect(socket) {
         } catch(e) {
           _reverse_ip = this.host;
         }
-        if(SERVER_WEBIRCHASHIP) {
+        if(SERVER_WEBIRCHASHIP && !SERVER_WEBIRCPROXY) {
+          this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' '+hash(this.hostonce).substr(0,6)+" "+this.host+"\n");
+        }
+        else if(SERVER_WEBIRCHASHIP && SERVER_WEBIRCPROXY) {
           this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' '+hash(this.host).substr(0,6)+" "+this.host+"\n");
         }
         else
