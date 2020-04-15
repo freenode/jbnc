@@ -44,6 +44,8 @@ bouncerPassword: leave blank for no password
 serverPort: if gateway mode, else ignored
 server: if gateway mode, else eignored
 webircPassword: if its there, it will try webirc authentication
+webircHashIp: true or false if you want to just hide their ip but provide a hash
+webircProxy: true or false if you want to pass their real ip (only matters with stunnel)
 bouncerPort: port for bnc,
 bouncerAdmin: admin pass
 bouncerTimeout: how long until after no clients connected will the user stay connected

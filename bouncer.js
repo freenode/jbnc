@@ -22,6 +22,8 @@ var BOUNCER_ADMIN = config.bouncerAdmin?config.bouncerAdmin:'';
 const BOUNCER_MODE = config.mode?config.mode:'bouncer';
 const BOUNCER_TIMEOUT = config.bouncerTimeout?config.bouncerTimeout:0;
 const SERVER_WEBIRC = config.webircPassword?config.webircPassword:'';
+const SERVER_WEBIRCHASHIP = config.webircHashIp?true:false;
+const SERVER_WEBIRCPROXY = config.webircProxy?true:false;
 const SERVER_PORT = BOUNCER_MODE=='gateway'?(config.serverPort?config.serverPort:0):0;
 const SERVER = BOUNCER_MODE=='gateway'?(config.server?config.server:''):'';
 const DEBUG = config.debug?config.debug:false;
@@ -90,8 +92,10 @@ server.on('connection', function(socket) {
         if(!this.connected && !this.badauth) {
           switch(command) {
             case 'PROXY':
-              if(commands[5] && !this.irc.password) {
-                this.host=commands[2];
+              if(SERVER_WEBIRCPROXY) {
+                if(commands[5] && !this.irc.password) {
+                  this.host=commands[2];
+                }
               }
               break;
             case 'PASS':
@@ -558,7 +562,11 @@ function clientConnect(socket) {
         } catch(e) {
           _reverse_ip = this.host;
         }
-        this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' '+_reverse_ip+" "+this.host+"\n");
+        if(SERVER_WEBIRCHASHIP) {
+          this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' '+hash(this.host).substr(0,6)+" "+this.host+"\n");
+        }
+        else
+          this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' '+_reverse_ip+" "+this.host+"\n");
       }
       this.write('NICK '+this.nick+'\n');
       this.write('USER '+this.user+' localhost '+this.server+' :'+this.realname+'\n');
