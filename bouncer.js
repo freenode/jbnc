@@ -46,7 +46,9 @@ var connections={};
 function hash(data) {
   return crypto.createHash('sha256').update(data, 'utf8').digest('base64');
 }
-
+function iphash(data) {
+  return crypto.createHash('md5').update(data).digest('hex').substr(0,6);
+}
 // Bouncer Server
 const server = net.Server();
 server.listen(BOUNCER_PORT);
@@ -567,10 +569,10 @@ function clientConnect(socket) {
           _reverse_ip = this.host;
         }
         if(SERVER_WEBIRCHASHIP && !SERVER_WEBIRCPROXY) {
-          this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' '+hash(this.hostonce).substr(0,6)+" "+this.host+"\n");
+          this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' '+iphash(this.hostonce)+" "+this.host+"\n");
         }
         else if(SERVER_WEBIRCHASHIP && SERVER_WEBIRCPROXY) {
-          this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' '+hash(this.host).substr(0,6)+" "+this.host+"\n");
+          this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' '+iphash(this.host)+" "+this.host+"\n");
         }
         else
           this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' '+_reverse_ip+" "+this.host+"\n");
