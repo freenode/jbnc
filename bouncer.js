@@ -865,9 +865,10 @@ function clientConnect(socket) {
           }
           if(data[0] == "PING")
             this.write("PONG "+data[1].substr(1).trim()+"\n");
-          for(m=0;m<this.parents.length && lines[n].length>1;m++)
-            this.parents[m].write(lines[n]+"\n");
-
+          if(lines[n].length>1) {
+            for(m=0;m<this.parents.length;m++)
+              this.parents[m].write(lines[n]+"\n");
+          }
           // store clientbuf if not connected
           if(lines[n].indexOf("PRIVMSG")>=0 || lines[n].indexOf("NOTICE")>=0 || lines[n].indexOf("WALLOPS")>=0 || lines[n].indexOf("GLOBOPS")>=0) {
             for(key in this.buffers) {
