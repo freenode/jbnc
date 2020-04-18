@@ -25,6 +25,7 @@ const SERVER_WEBIRC = config.webircPassword?config.webircPassword:'';
 const SERVER_WEBIRCHASHIP = config.webircHashIp?true:false;
 const SERVER_WEBIRCPROXY = config.webircProxy?true:false;
 const SERVER_PORT = BOUNCER_MODE=='gateway'?(config.serverPort?config.serverPort:0):0;
+const INGRESSWEBIRC = config.ingresswebircPassword?config.ingresswebircPassword:'';
 const SERVER = BOUNCER_MODE=='gateway'?(config.server?config.server:''):'';
 const DEBUG = config.debug?config.debug:false;
 
@@ -102,6 +103,13 @@ server.on('connection', function(socket) {
               }
               else {
                 this.hostonce=commands[2];
+              }
+              break;
+            case 'WEBIRC':
+              if(commands[4]) {
+                if(INGRESSWEBIRC.length>0 && commands[1]==INGRESSWEBIRC) {
+                  this.host=commands[4];
+                }
               }
               break;
             case 'PASS':

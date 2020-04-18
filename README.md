@@ -46,6 +46,7 @@ server: if gateway mode, else eignored
 webircPassword: if its there, it will try webirc authentication
 webircHashIp: true or false if you want to just hide their ip but provide a hash
 webircProxy: true or false if you want to pass their real ip (only matters with stunnel)
+ingresswebircPassword: a password for webirc clients to use when connecting to jbnc
 bouncerPort: port for bnc,
 bouncerAdmin: admin pass
 bouncerTimeout: how long until after no clients connected will the user stay connected
