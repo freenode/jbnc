@@ -183,7 +183,10 @@ server.on('connection', function(socket) {
               }
               else if(commands.length >= 5) {
                 this.irc.user = commands[1].trim();
-                this.irc.realname = input[i].split(" :").pop().trim();
+                this.irc.realname = commands.slice(4).join(" ");
+                if(this.irc.realname.substr(0,1)==':')
+                  this.irc.realname=this.irc.realname.substr(1);
+//                this.irc.realname = input[i].split(" :").pop().trim();
                 if(BOUNCER_USER.length>0 && this.irc.user!=BOUNCER_USER) {
                   this.write(":*jbnc NOTICE * :*** Incorrect Username ***\n");
                   this.end();
