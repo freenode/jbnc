@@ -234,6 +234,7 @@ server.on('connection', function(socket) {
                 this.write(":*jbnc NOTICE * :QUIT - Disconnects and deletes your profile\n");
                 this.write(":*jbnc NOTICE * :PASS - Change your password\n");
                 this.write(":*jbnc NOTICE * :CONN - Show which devices are connected to your bouncer user connection\n");
+                this.write(":*jbnc NOTICE * :BUFFERS - Show what buffers exist and their size\n");
                 if(!this.admin)
                   this.write(":*jbnc NOTICE * :ADMIN - Get admin access\n");
                 else {
@@ -304,6 +305,17 @@ server.on('connection', function(socket) {
                       this.write(":*jbnc NOTICE * :"+connections[this.hash].parents[x].clientbuffer+" ("+connections[this.hash].parents[x].remoteAddress+")\n");
                     }
                     break;
+                  case 'BUFFERS':
+                   totalbuffers = 0;
+                    for(key in connections[this.hash].buffers) {
+                      if(connections[this.hash].buffers.hasOwnProperty(key)) {
+                        connected = connections[this.hash].buffers[key].connected;
+                        this.write(":*jbnc NOTICE * :"+key+" ("+(connected?"connected":"not connected")+") ["+connections[this.hash].buffers[key].data.length+" bytes]\n");
+                        totalbuffers++;
+                      }
+                    }
+                    this.write(":*jbnc NOTICE * :You have " + totalbuffers + " buffers.\n");
+                    break
                   case 'WHOIS':
                     if(this.admin) {
                       if(command[2]) {
