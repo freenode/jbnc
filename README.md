@@ -50,6 +50,7 @@ ingresswebircPassword: a password for webirc clients to use when connecting to j
 bouncerPort: port for bnc,
 bouncerAdmin: admin pass
 bouncerTimeout: how long until after no clients connected will the user stay connected
+bufferMaxSize: maximum # of bytes a client buffer can hold before its terminated or 0 for unlimited
 ```
 
 3. Run

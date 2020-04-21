@@ -21,6 +21,7 @@ var BOUNCER_PASSWORD = config.bouncerPassword?config.bouncerPassword:'';
 var BOUNCER_ADMIN = config.bouncerAdmin?config.bouncerAdmin:'';
 const BOUNCER_MODE = config.mode?config.mode:'bouncer';
 const BOUNCER_TIMEOUT = config.bouncerTimeout?config.bouncerTimeout:0;
+const BUFFER_MAXSIZE = config.bufferMaxSize?config.bufferMaxSize:52428800;
 const SERVER_WEBIRC = config.webircPassword?config.webircPassword:'';
 const SERVER_WEBIRCHASHIP = config.webircHashIp?true:false;
 const SERVER_WEBIRCPROXY = config.webircProxy?true:false;
@@ -409,6 +410,8 @@ server.on('connection', function(socket) {
                     if(connections[this.hash].buffers.hasOwnProperty(key)) {
                       if(!connections[this.hash].buffers[key].connected) {
                         connections[this.hash].buffers[key].data+=":"+connections[this.hash].nick+"!"+connections[this.hash].ircuser+"@"+connections[this.hash].host+" "+input[i]+"\n";
+                        if(connections[this.hash].buffers[key].data.length>=BUFFER_MAXSIZE && BUFFER_MAXSIZE!=0)
+                          delete connections[this.hash].buffers[key];
                       }
                     }
                   }
