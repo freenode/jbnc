@@ -15,7 +15,7 @@ if(fs.existsSync(_config)) config = JSON.parse(fs.readFileSync(_config));
 else process.exit(1);
 
 // Set config vars
-const BOUNCER_PORT = config.bouncerPort?config.bouncerPort:8888;
+var BOUNCER_PORT = config.bouncerPort?config.bouncerPort:8888;
 const BOUNCER_USER = config.bouncerUser?config.bouncerUser:'';
 var BOUNCER_PASSWORD = config.bouncerPassword?config.bouncerPassword:'';
 var BOUNCER_ADMIN = config.bouncerAdmin?config.bouncerAdmin:'';
@@ -52,10 +52,23 @@ function iphash(data) {
   return crypto.createHash('md5').update(data).digest('hex').substr(0,6);
 }
 // Bouncer Server
-const server = net.Server();
-server.listen(BOUNCER_PORT);
+let server;
+let doServer;
+let tlsOptions;
+if(BOUNCER_PORT.toString().substr(0,1)=='+') {
+  tlsOptions = {
+    key: fs.readFileSync("privkey.pem"),
+    cert: fs.readFileSync("fullchain.pem")
+  };
+  BOUNCER_PORT=BOUNCER_PORT.substr(1);
+  doServer = tls.createServer;
+}
+else {
+  tlsOptions = {};
+  doServer = net.createServer;
+}
 var users=0;
-server.on('connection', function(socket) {
+server = doServer(tlsOptions,function(socket) {
   // Used for auth
   socket.badauth=false;
   socket.irc={};
@@ -926,3 +939,4 @@ function clientConnect(socket) {
   }
 }
 
+server.listen(BOUNCER_PORT);

@@ -13,7 +13,7 @@ Join #jbnc on freenode to learn more!
 - Always on connection to IRC
 - No registration or account required
 - Separate buffers for clients
-- SSL with stunnel
+- SSL
 - Works with any RFC 1459 Compatible Client
 - Password can be changed in the config and a HUP will reload the passwords.
 - ***Gateway Mode for IRC Servers and Networks (See Below)***
@@ -47,7 +47,7 @@ webircPassword: if its there, it will try webirc authentication
 webircHashIp: true or false if you want to just hide their ip but provide a hash
 webircProxy: true or false if you want to pass their real ip (only matters with stunnel)
 ingresswebircPassword: a password for webirc clients to use when connecting to jbnc
-bouncerPort: port for bnc,
+bouncerPort: port for bnc (do "+6697" if you want SSL (wrap in "" and put +)),
 bouncerAdmin: admin pass
 bouncerTimeout: how long until after no clients connected will the user stay connected
 bufferMaxSize: maximum # of bytes a client buffer can hold before its terminated or 0 for unlimited
@@ -65,33 +65,11 @@ node bouncer.js somefile.conf &
 ```
 
 #### Keep it running forever (no downtime)
-Sometimes stunnel crashes, so in order to keep things running 24/7/365, there's a great app called [immortal](https://immortal.run/).
+To keep things running 24/7/365, there's a great app called [immortal](https://immortal.run/).
 
-The immortaldir files are located in this repo (stunnel.yml and jbnc.yml).
+The immortaldir files are located in this repo (jbnc.yml).
 
 Note: To use immortal on ubuntu, after following the steps on the page, please be sure to `systemctl enable immortaldir` as well as start.
-
-
-#### SSL
-1. On Ubuntu
-```
-sudo apt install stunnel
-```
-
-2. Get an SSL cert from Let's Encrypt
-
-3. Edit /etc/stunnel/stunnel.conf
-```
-cert = /etc/stunnel/fullchain.pem
-key  = /etc/stunnel/privkey.pem
-client = no
-
-[jbnc]
-protocol = proxy
-accept = 9998
-connect = 8888
-```
-4. Run!
 
 ### IRC Client
 You just need to set your password in your jbnc config and then setup your IRC client:
