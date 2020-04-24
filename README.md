@@ -88,6 +88,11 @@ dragon||AJFiej2fn2345/irc.dal.net:6667/desktop
 dragon||AJFiej2fn2345/irc.dal.net:6667/mobile
 ```
 
+Here is an example for a desktop connecting to an irc server that is password protected and a bnc that is password protected:
+```
+dragon||AJFiej2fn2345/irc.dal.net:6667||somepassword/desktop
+```
+
 #### SSL Client
 Use "+port" to do SSL.  For example:
 ```

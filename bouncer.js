@@ -140,6 +140,7 @@ server = doServer(tlsOptions,function(socket) {
                   this.irc.user=null;
                   this.irc.password=null;
                   this.irc.realname=null;
+                  this.irc.serverpassword=null;
 
                   origin = commands[1].trim().split("/");
                   if(origin[0].indexOf("||")>0)
@@ -165,9 +166,13 @@ server = doServer(tlsOptions,function(socket) {
                     if(origin.length!=2 && origin.length!=3)
                       this.end();
                     else {
-                      _server = origin[1].split(":");
+                      _server_pass = origin[1].split("||");
+                      _server = _server_pass[0].split(":");
                       this.irc.server = _server[0];
                       this.irc.port = (_server[1] ? _server[1].trim() : 6667);
+                      if(_server_pass[1]) {
+                        this.irc.serverpassword=_server_pass[1];
+                      }
                       if(origin[2])
                         this.clientbuffer=origin[2].trim();
                     }
@@ -566,12 +571,13 @@ function clientReconnect(socket) {
 function clientConnect(socket) {
   let _success=true;
   let _connector=net.createConnection;
-  if(socket.irc.port.toString().substr(0,1)=="+") {
+  let _tempport=socket.irc.port.toString();
+  if(_tempport.substr(0,1)=="+") {
     _connector=tls.connect;
-    socket.irc.port=parseInt(socket.irc.port.toString().substr(1));
+    _tempport=parseInt(socket.irc.port.toString().substr(1));
   }
   try {
-    connection = _connector(socket.irc.port, socket.irc.server);
+    connection = _connector(_tempport, socket.irc.server);
   } catch(e) {
     _success=false;
   }
@@ -595,6 +601,8 @@ function clientConnect(socket) {
     connection.server = socket.irc.server;
     connection.port = socket.irc.port;
     connection.realname = socket.irc.realname;
+    connection.hash = socket.hash;
+    connection.serverpassword = socket.irc.serverpassword;
     connection.host = socket.host!=null?socket.host:(socket.remoteAddress.substr(0,7)=="::ffff:"?socket.remoteAddress.substr(7):socket.remoteAddress);
     connection.umode='';
     connection.motd='';
@@ -623,6 +631,9 @@ function clientConnect(socket) {
         }
         else
           this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' '+_reverse_ip+" "+this.host+"\n");
+      }
+      if(this.serverpassword) {
+        this.write('PASS '+this.serverpassword+'\n');
       }
       this.write('NICK '+this.nick+'\n');
       this.write('USER '+this.user+' localhost '+this.server+' :'+this.realname+'\n');
