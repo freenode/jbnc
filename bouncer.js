@@ -908,9 +908,11 @@ function clientConnect(socket) {
               }
               break;
             case '433':
-              if(data[2]=='*') {
-                this.write("NICK "+data[3].trim()+"_"+"\n");
-                this.nick=data[3].trim()+"_";
+              if(this.parents.length==0) {
+                if(data[2]=='*') {
+                  this.write("NICK "+data[3].trim()+"_"+"\n");
+                  this.nick=data[3].trim()+"_";
+                }
               }
               break;
           }
