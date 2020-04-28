@@ -191,8 +191,18 @@ server = doServer(tlsOptions,function(socket) {
                 this.badauth=true;
                 this.end();
               }
-              else if(commands[1])
+              else if(commands[1]) {
                 this.irc.nick=commands[1].trim();
+                if(this.irc.user) {
+                  this.hash=hash(this.irc.nick+this.irc.user+this.irc.password+this.irc.server+this.irc.port.toString());
+                  if(connections[socket.hash]) {
+                    clientReconnect(this);
+                  }
+                  else {
+                    clientConnect(this);
+                  }
+                }
+              }
               break;
             case 'USER':
               if(!this.irc.password) {
@@ -210,12 +220,14 @@ server = doServer(tlsOptions,function(socket) {
                   this.end();
                 }
                 else {
-                  this.hash=hash(this.irc.nick+this.irc.user+this.irc.password+this.irc.server+this.irc.port.toString());
-                  if(connections[socket.hash]) {
-                    clientReconnect(this);
-                  }
-                  else {
-                    clientConnect(this);
+                  if(this.irc.nick) {
+                    this.hash=hash(this.irc.nick+this.irc.user+this.irc.password+this.irc.server+this.irc.port.toString());
+                    if(connections[socket.hash]) {
+                      clientReconnect(this);
+                    }
+                    else {
+                      clientConnect(this);
+                    }
                   }
                 }
               }
