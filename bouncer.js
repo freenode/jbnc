@@ -703,11 +703,11 @@ function clientConnect(socket) {
                 else {
                   if(_add) {
                     if(_sender==_target && _target==this.nick) {
-                      if(this.umode.indexOf(_mode[i])==-1)
+                      if(this.umode && this.umode.indexOf(_mode[i])==-1)
                         this.umode+=_mode[i];
                     }
                     else if(this.channels[_target.toUpperCase()]  && (_mode[i]!='o' && _mode[i]!='k' && _mode[i]!='v' && _mode[i]!='h' && _mode[i]!='l')) {
-                      if(this.channels[_target.toUpperCase()].modes.indexOf(_mode[i])==-1)
+                      if(this.channels[_target.toUpperCase()].modes && this.channels[_target.toUpperCase()].modes.indexOf(_mode[i])==-1)
                         this.channels[_target.toUpperCase()].modes+=_mode[i];
                     }
                     else if((_target.indexOf("#")!=-1||_target.indexOf("&")!=-1) && (_mode[i]=='o' || _mode[i]=='k' || _mode[i]=='v' || _mode[i]=='h' || _mode[i]=='l' ||
