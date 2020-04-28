@@ -405,6 +405,8 @@ server = doServer(tlsOptions,function(socket) {
               // supress joins of channels we are already in because some clients dont react properly.
               if(input[i].toString().substr(0,4)=="JOIN") {
                 command=input[i].toString().trim().split(" ");
+                if(!command[1])
+                  break;
                 channels=command[1].split(",");
                 if(command[2])
                   passwords=command[2].split(",");
