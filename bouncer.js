@@ -153,7 +153,8 @@ server = doServer(tlsOptions,function(socket) {
                     this.badauth=true;
                     this.end();
                   }
-
+                  // hash password
+                  this.irc.password = hash(this.irc.password);
                   if(BOUNCER_MODE=="gateway") {
                     if(origin.length!=1 && origin.length!=2)
                       this.end();
@@ -390,9 +391,9 @@ server = doServer(tlsOptions,function(socket) {
                     break;
                   case 'PASS':
                     if(command[3]) {
-                      if(command[2]==connections[this.hash].password) {
-                        connections[this.hash].password=command[3];
-                        this.irc.password=command[3];
+                      if(hash(command[2])==connections[this.hash].password) {
+                        connections[this.hash].password=hash(command[3]);
+                        this.irc.password=connections[this.hash].password;
                         this.write(":*jbnc NOTICE * :Password changed to "+command[3]+"\n");
                         _newhash=hash(this.irc.nick+this.irc.user+this.irc.password+this.irc.server+this.irc.port.toString());
                         connections[_newhash]=connections[this.hash];
@@ -402,9 +403,10 @@ server = doServer(tlsOptions,function(socket) {
                       else
                         this.write(":*jbnc NOTICE * :Incorrect password.\n");
                     }
-                    else
+                    else {
                       this.write(":*jbnc NOTICE * :Syntax error.\n");
                       this.write(":*jbnc NOTICE * :PASS <old password> <new password>.\n");
+                    }
                     break;
                   default:
                     this.write(":*jbnc NOTICE * :Unknown command.\n");
