@@ -688,7 +688,7 @@ function clientConnect(socket) {
         for(n=0;n<lines.length;n++) {
           if(DEBUG)
             console.log("> "+lines[n]);
-          data = lines[n].split(" ");
+          data = lines[n].trim().split(" ");
           switch(data[1]) {
             case '001':
 
@@ -714,8 +714,15 @@ function clientConnect(socket) {
               _sender=data[0].substr(1).split("!")[0];
               _mode = data[1]=='324'?data[4].trim():data[3].trim();
               _mode = _mode.indexOf(":")!=-1?_mode.substr(1):_mode;
-              _mode_target = (data[1]=='324'?(data[5]?data[5].trim():null):(data[4]?data[4].trim():null));
-              _mode_target = (!_mode_target?null:_mode_target.split(' '));
+              _mode_target=[];
+              if(data[1]=='324') {
+                if(data[5])
+                  _mode_target = data.slice(5,data.length);
+              }
+              else {
+                if(data[4])
+                  _mode_target = data.slice(4,data.length);
+              }
               _mode_count = 0;
               _add = true;
               // walk thru modes
