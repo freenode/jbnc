@@ -22,6 +22,7 @@ var BOUNCER_ADMIN = config.bouncerAdmin?config.bouncerAdmin:'';
 const BOUNCER_MODE = config.mode?config.mode:'bouncer';
 const BOUNCER_TIMEOUT = config.bouncerTimeout?config.bouncerTimeout:0;
 const BUFFER_MAXSIZE = config.bufferMaxSize?config.bufferMaxSize:52428800;
+const BOUNCER_SHACK = config.bouncerShack?config.bouncerShack:10;
 const SERVER_WEBIRC = config.webircPassword?config.webircPassword:'';
 const SERVER_WEBIRCHASHIP = config.webircHashIp?true:false;
 const SERVER_WEBIRCPROXY = config.webircProxy?true:false;
@@ -89,6 +90,17 @@ server = doServer(tlsOptions,function(socket) {
   socket._buffer='';
   socket._outbuffer=''; // Just used at the beginning only
   socket.hostonce='';
+
+  // Shack
+  socket.lastping='';
+  socket.pings = setInterval(function() {
+    if(socket.lastping.length>0) {
+      socket.end();
+    }
+    socket.lastping=Date.now();
+    socket.write("PING :"+socket.lastping+" jbnc\n");
+
+  },BOUNCER_SHACK*1000,socket);
 
   socket.on('data', function(chunk) {
     let _chunk = chunk.toString();
@@ -247,6 +259,15 @@ server = doServer(tlsOptions,function(socket) {
         else if(this.connected && !this.badauth) {
           command = input[i].toString().split(" ");
           switch(command[0].toUpperCase().trim()) {
+            case 'PONG':
+              if(command[1]) {
+                if(command[1].substr(0,1)==':')
+                  command[1]=command[1].substr(1);
+                if(this.lastping == command[1]) {
+                  this.lastping='';
+                }
+              }
+              break;
             case 'QUIT':
               this.end();
               break;
@@ -442,12 +463,12 @@ server = doServer(tlsOptions,function(socket) {
                 }
                 break;
               }
-              if(connections[this.hash] && connections[this.hash].authenticated) {
+              if(connections[this.hash] && connections[this.hash].authenticated && (input[i].toString().split(" ")[0]!="PONG" && input[i].toString().split(" ")[2]!="jbnc")) {
                 connections[this.hash].write(input[i].toString() + "\n");
                 for(m=0;m<connections[this.hash].parents.length;m++) {
                   if(connections[this.hash].parents[m]==this)
                     continue;
-                  else {
+                  else if(input[i].toString.split(" ")[0]!="PONG") {
                     connections[this.hash].parents[m].write(":"+connections[this.hash].nick+" "+input[i].toString() + "\n");
                   }
                 }
@@ -485,6 +506,7 @@ server = doServer(tlsOptions,function(socket) {
     }
   });
   socket.on('close', function() {
+    clearInterval(this.pings);
     if(connections[this.hash] && connections[this.hash].buffers[this.clientbuffer]) {
       connections[this.hash].buffers[this.clientbuffer].connected=false;
     }
@@ -932,14 +954,17 @@ function clientConnect(socket) {
               }
               break;
           }
-          if(data[0] == "PING")
+          if(data[0] == "PING") {
             this.write("PONG "+data[1].substr(1).trim()+"\n");
+            continue;
+          }
           if(lines[n].length>1) {
-            for(m=0;m<this.parents.length;m++)
+            for(m=0;m<this.parents.length;m++) {
               this.parents[m].write(lines[n]+"\n");
+            }
           }
           // store clientbuf if not connected
-          if(lines[n].indexOf("PRIVMSG")>=0 || lines[n].indexOf("NOTICE")>=0 || lines[n].indexOf("WALLOPS")>=0 || lines[n].indexOf("GLOBOPS")>=0) {
+          if(lines[n].indexOf("PRIVMSG")>=0 || lines[n].indexOf("NOTICE")>=0 || lines[n].indexOf("WALLOPS")>=0 || lines[n].indexOf("GLOBOPS")>=0 || lines[n].indexOf("CHATOPS")>=0) {
             for(key in this.buffers) {
               if(this.buffers.hasOwnProperty(key)) {
                 if(!this.buffers[key].connected) {
@@ -953,6 +978,7 @@ function clientConnect(socket) {
     });
     connection.on('close', function() {
       for(x=0;x<this.parents.length;x++) {
+        clearInterval(this.parents[x].pings);
         this.parents[x].write(":"+this.nick + " QUIT :QUIT");
         this.parents[x].end();
       }

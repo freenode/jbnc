@@ -49,6 +49,7 @@ webircProxy: true or false if you want to pass their real ip (only matters with 
 ingresswebircPassword: a password for webirc clients to use when connecting to jbnc
 bouncerPort: port for bnc (do "+6697" if you want SSL (wrap in "" and put +)),
 bouncerAdmin: admin pass
+bouncerShack: ping ack timeout
 bouncerTimeout: how long until after no clients connected will the user stay connected
 bufferMaxSize: maximum # of bytes a client buffer can hold before its terminated or 0 for unlimited
 ```
