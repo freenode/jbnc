@@ -97,8 +97,8 @@ server = doServer(tlsOptions,function(socket) {
     if(socket.lastping.length>0) {
       socket.end();
     }
-    socket.lastping=Date.now();
-    socket.write("PING :"+socket.lastping+" jbnc\n");
+    socket.lastping=Date.now()+".jbnc";
+    socket.write("PING :"+socket.lastping+"\n");
 
   },BOUNCER_SHACK*1000,socket);
 
@@ -463,7 +463,7 @@ server = doServer(tlsOptions,function(socket) {
                 }
                 break;
               }
-              if(connections[this.hash] && connections[this.hash].authenticated && (input[i].toString().split(" ")[0]!="PONG" && input[i].toString().split(" ")[2]!="jbnc")) {
+              if(connections[this.hash] && connections[this.hash].authenticated && (input[i].toString().split(" ")[0]!="PONG" && input[i].toString().split(" ")[1].split(".")[1]!="jbnc")) {
                 connections[this.hash].write(input[i].toString() + "\n");
                 for(m=0;m<connections[this.hash].parents.length;m++) {
                   if(connections[this.hash].parents[m]==this)
