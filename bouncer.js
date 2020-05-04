@@ -98,7 +98,11 @@ server = doServer(tlsOptions,function(socket) {
       socket.end();
     }
     socket.lastping=Date.now()+".jbnc";
-    socket.write("PING :"+socket.lastping+"\n");
+    try {
+      socket.write("PING :"+socket.lastping+"\n");
+    } catch(e) {
+      clearInterval(socket.pings);
+    }
     if(DEBUG) {
       console.log("PING :"+socket.lastping+"\n");
     }
