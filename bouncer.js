@@ -99,7 +99,9 @@ server = doServer(tlsOptions,function(socket) {
     }
     socket.lastping=Date.now()+".jbnc";
     socket.write("PING :"+socket.lastping+"\n");
-
+    if(DEBUG) {
+      console.log("PING :"+socket.lastping+"\n");
+    }
   },BOUNCER_SHACK*1000,socket);
 
   socket.on('data', function(chunk) {
@@ -265,6 +267,9 @@ server = doServer(tlsOptions,function(socket) {
                   command[1]=command[1].substr(1);
                 if(this.lastping == command[1]) {
                   this.lastping='';
+                }
+                else {
+                  connections[this.hash].write("PONG "+command[1]+"\n");
                 }
               }
               break;
@@ -463,19 +468,8 @@ server = doServer(tlsOptions,function(socket) {
                 }
                 break;
               }
-              if(input[i].toString() && connections[this.hash] && connections[this.hash].authenticated) {
-                if(input[i].toString().split(" ")[0]=="PONG") {
-                  if(input[i].toString().split(" ").length==2) {
-                    if(input[i].toString().split(" ")[1].split(".")[1]=="jbnc") {
-                    }
-                    else
-                      connections[this.hash].write(input[i].toString() + "\n");
-                  }
-                  else
-                    connections[this.hash].write(input[i].toString() + "\n");
-                }
-                else
-                  connections[this.hash].write(input[i].toString() + "\n");
+              if(input[i] && connections[this.hash] && connections[this.hash].authenticated) {
+                connections[this.hash].write(input[i].toString() + "\n");
                 for(m=0;m<connections[this.hash].parents.length;m++) {
                   if(connections[this.hash].parents[m]==this)
                     continue;
