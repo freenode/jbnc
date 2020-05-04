@@ -940,13 +940,13 @@ function clientConnect(socket) {
               _names=lines[n].substr(1).split(" :")[1].trim().split(" ");
               if(!this._getnames[_channel]) {
                 this._getnames[_channel]=true;
-                if(!this.channels[_channel]) {
-                  this.channels[_channel]={};
-                  this.channels[_channel].names=[];
-                }
+              }
+              if(!this.channels[_channel]) {
+                this.channels[_channel]={};
+                this.channels[_channel].names=[];
               }
               for(x=0;x<_names.length;x++)
-                this.channels[_channel].names[this.channels[_channel].names.length]=_names[x].trim();
+                this.channels[_channel].names.push(_names[x].trim());
               break;
             case '366':
               _channel=data[3].toUpperCase().trim();
