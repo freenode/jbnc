@@ -463,8 +463,19 @@ server = doServer(tlsOptions,function(socket) {
                 }
                 break;
               }
-              if(input[i].toString() && connections[this.hash] && connections[this.hash].authenticated && (input[i].toString().split(" ")[0]!="PONG" && input[i].toString().split(" ")[1].split(".")[1]!="jbnc")) {
-                connections[this.hash].write(input[i].toString() + "\n");
+              if(input[i].toString() && connections[this.hash] && connections[this.hash].authenticated) {
+                if(input[i].toString().split(" ")[0]=="PONG") {
+                  if(input[i].toString().split(" ").length==2) {
+                    if(input[i].toString().split(" ")[1].split(".")[1]=="jbnc") {
+                    }
+                    else
+                      connections[this.hash].write(input[i].toString() + "\n");
+                  }
+                  else
+                    connections[this.hash].write(input[i].toString() + "\n");
+                }
+                else
+                  connections[this.hash].write(input[i].toString() + "\n");
                 for(m=0;m<connections[this.hash].parents.length;m++) {
                   if(connections[this.hash].parents[m]==this)
                     continue;
