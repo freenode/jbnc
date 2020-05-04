@@ -468,7 +468,7 @@ server = doServer(tlsOptions,function(socket) {
                 for(m=0;m<connections[this.hash].parents.length;m++) {
                   if(connections[this.hash].parents[m]==this)
                     continue;
-                  else if(input[i].toString.split(" ")[0]!="PONG") {
+                  else if(input[i].toString().split(" ")[0]!="PONG") {
                     connections[this.hash].parents[m].write(":"+connections[this.hash].nick+" "+input[i].toString() + "\n");
                   }
                 }
