@@ -421,6 +421,7 @@ server = doServer(tlsOptions,function(socket) {
                     break;
                   case 'QUIT':
                     this.write(":*jbnc NOTICE * :Sayonara.\n");
+                    connections[this.hash].write("QUIT :jbnc gateway\n");
                     connections[this.hash].end();
                     break;
                   case 'PASS':
