@@ -597,8 +597,18 @@ function clientReconnect(socket) {
         }
       }
       socket.write(":*jbnc 324 "+connection.nick+" "+key+" +"+_channel.modes+" "+_mode_params+"\n");
-      socket.write(":*jbnc 332 "+connection.nick+" "+key+" :"+_channel.topic+"\n");
-      socket.write(":*jbnc 333 "+connection.nick+" "+key+" "+_channel.topic_set+" "+_channel.topic_time+"\n");
+      if(_channel.topic.length>0) {
+        socket.write(":*jbnc 332 "+connection.nick+" "+key+" :"+_channel.topic+"\n");
+        socket.write(":*jbnc 333 "+connection.nick+" "+key+" "+_channel.topic_set+" "+_channel.topic_time+"\n");
+      }
+      if(DEBUG) {
+        console.log(":*jbnc 324 "+connection.nick+" "+key+" +"+_channel.modes+" "+_mode_params);
+        if(_channel.topic.length>0) {
+          console.log(":*jbnc 332 "+connection.nick+" "+key+" :"+_channel.topic);
+          console.log(":*jbnc 333 "+connection.nick+" "+key+" "+_channel.topic_set+" "+_channel.topic_time);
+        }
+      }
+
       for(x=0;x<_channel.names.length;x++) {
         if(x%53==0) {
           socket.write("\n");
@@ -620,6 +630,8 @@ function clientReconnect(socket) {
   }
 
   socket.write(":"+connection.nick+" MODE "+connection.nick+" :+"+connection.umode+"\n");
+  if(DEBUG)
+    console.log(":"+connection.nick+" MODE "+connection.nick+" :+"+connection.umode)
   if(connection.buffers[socket.clientbuffer] && connection.buffers[socket.clientbuffer].data && connection.buffers[socket.clientbuffer].data.length>0) {
     socket.write(connection.buffers[socket.clientbuffer].data+"\n");
     connection.buffers[socket.clientbuffer].data='';
@@ -754,11 +766,12 @@ function clientConnect(socket) {
                 else {
                   if(_add) {
                     if(_sender==_target && _target==this.nick) {
-                      if(this.umode && this.umode.indexOf(_mode[i])==-1)
+                      if(this.umode!=null && this.umode.indexOf(_mode[i])==-1) {
                         this.umode+=_mode[i];
+                      }
                     }
-                    else if(curchan  && (_mode[i]!='o' && _mode[i]!='k' && _mode[i]!='v' && _mode[i]!='h' && _mode[i]!='l')) {
-                      if(curchan.modes && curchan.modes.indexOf(_mode[i])==-1)
+                    else if(curchan!=null && (_mode[i]!='o' && _mode[i]!='k' && _mode[i]!='v' && _mode[i]!='h' && _mode[i]!='l')) {
+                      if(curchan.modes!=null && curchan.modes.indexOf(_mode[i])==-1)
                         curchan.modes+=_mode[i];
                     }
                     else if((_target.indexOf("#")!=-1||_target.indexOf("&")!=-1) && (_mode[i]=='o' || _mode[i]=='k' || _mode[i]=='v' || _mode[i]=='h' || _mode[i]=='l' ||
@@ -827,7 +840,7 @@ function clientConnect(socket) {
                     _regex = new RegExp(_mode[i],"g")
                     if(_sender==_target && _target==this.nick)
                       this.umode=this.umode.replace(_regex,"");
-                    else if(curchan && (_mode[i]!='o' && _mode[i]!='v' && _mode[i]!='h'))
+                    else if(curchan != null && (_mode[i]!='o' && _mode[i]!='v' && _mode[i]!='h'))
                       curchan.modes=curchan.modes.replace(_regex,"");
                     if((_target.indexOf("#")!=-1||_target.indexOf("&")!=-1) && (_mode[i]=='o' || _mode[i]=='k' || _mode[i]=='v' || _mode[i]=='h' || _mode[i]=='l' ||
                                                          _mode[i]=='e' || _mode[i]=='b' || _mode[i]=='I' || _mode[i]=='q' || _mode[i]=='f' ||
