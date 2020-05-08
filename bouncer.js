@@ -281,6 +281,9 @@ server = doServer(tlsOptions,function(socket) {
             case 'QUIT':
               this.end();
               break;
+            case 'CAP':
+              this.write(":*jbnc NOTICE * :*** No CAPabilities available. ***\n");
+              continue;
             case 'NICK':
               if(this.hash && connections[this.hash] && command[1]) {
                 connections[this.hash].write("NICK "+command[1]+"\n");
@@ -600,12 +603,18 @@ function clientReconnect(socket) {
         if(x%53==0) {
           socket.write("\n");
           socket.write(":*jbnc 353 "+connection.nick+" = "+key+" :");
+          if(DEBUG)
+           console.log(":*jbnc 353 "+connection.nick+" = "+key+" :");
         }
         socket.write(_channel.names[x]);
+        if(DEBUG)
+          console.log(_channel.names[x]);
         if(x+1<_channel.names.length) {
           socket.write(" ");
         }
       }
+      if(DEBUG)
+        console.log("\n:*jbnc 366 "+connection.nick+" "+key+" :End of /NAMES list.\n");
       socket.write("\n:*jbnc 366 "+connection.nick+" "+key+" :End of /NAMES list.\n");
     }
   }
@@ -685,7 +694,7 @@ function clientConnect(socket) {
         this.write('PASS '+this.serverpassword+'\n');
       }
       this.write('NICK '+this.nick+'\n');
-      this.write('USER '+this.user+' localhost '+this.server+' :'+this.realname+'\n');
+      this.write('USER '+this.user+' * 0 :'+this.realname+'\n');
       connections[hash(this.nick_original+this.user+this.password+this.server+this.port.toString())] = this;
     });
     connection.on('data', function(d){
@@ -737,6 +746,7 @@ function clientConnect(socket) {
               _add = true;
               // walk thru modes
               for(i=0;i<_mode.length;i++) {
+                let curchan=this.channels[_target.toUpperCase()];
                 if(_mode[i]=='+')
                   _add=true;
                 else if(_mode[i]=='-')
@@ -747,28 +757,49 @@ function clientConnect(socket) {
                       if(this.umode && this.umode.indexOf(_mode[i])==-1)
                         this.umode+=_mode[i];
                     }
-                    else if(this.channels[_target.toUpperCase()]  && (_mode[i]!='o' && _mode[i]!='k' && _mode[i]!='v' && _mode[i]!='h' && _mode[i]!='l')) {
-                      if(this.channels[_target.toUpperCase()].modes && this.channels[_target.toUpperCase()].modes.indexOf(_mode[i])==-1)
-                        this.channels[_target.toUpperCase()].modes+=_mode[i];
+                    else if(curchan  && (_mode[i]!='o' && _mode[i]!='k' && _mode[i]!='v' && _mode[i]!='h' && _mode[i]!='l')) {
+                      if(curchan.modes && curchan.modes.indexOf(_mode[i])==-1)
+                        curchan.modes+=_mode[i];
                     }
                     else if((_target.indexOf("#")!=-1||_target.indexOf("&")!=-1) && (_mode[i]=='o' || _mode[i]=='k' || _mode[i]=='v' || _mode[i]=='h' || _mode[i]=='l' ||
                                                          _mode[i]=='e' || _mode[i]=='b' || _mode[i]=='I' || _mode[i]=='q' || _mode[i]=='f' ||
                                                          _mode[i]=='j')) {
                       if(_mode[i]=='o' || _mode[i]=='v' || _mode[i]=='h') {
-                        for(c=0;c<this.channels[_target.toUpperCase()].names.length;c++) {
-                          if(this.channels[_target.toUpperCase()].names[c].replace("@","").replace("+","").replace("%","")==_mode_target[_mode_count]) {
+                        for(c=0;c<curchan.names.length;c++) {
+                          if(curchan.names[c].replace("@","").replace("+","").replace("%","")==_mode_target[_mode_count]) {
                             switch(_mode[i]) {
                               case 'o':
-                                if(this.channels[_target.toUpperCase()].names[c].indexOf("@")==-1)
-                                  this.channels[_target.toUpperCase()].names[c]="@"+this.channels[_target.toUpperCase()].names[c];
+                                if(curchan.names[c].indexOf("@")==-1)
+                                  curchan.names[c]="@"+curchan.names[c];
                                 break;
                               case 'v':
-                                if(this.channels[_target.toUpperCase()].names[c].indexOf("+")==-1)
-                                  this.channels[_target.toUpperCase()].names[c]="+"+this.channels[_target.toUpperCase()].names[c];
+                                if(curchan.names[c].indexOf("+")==-1) {
+                                  if(curchan.names[c].indexOf("@")==-1) {
+                                    if(curchan.names[c].indexOf("%")==-1) {
+                                      curchan.names[c]="+"+curchan.names[c];
+                                    }
+                                    else {
+                                      curchan.names[c]=curchan.names[c].substr(0,1)+"+"+curchan.names[c].substr(1);
+                                    }
+                                  }
+                                  else {
+                                    if(curchan.names[c].indexOf("%")==-1) {
+                                      curchan.names[c]=curchan.names[c].substr(0,1)+"+"+curchan.names[c].substr(1);
+                                    }
+                                    else {
+                                      curchan.names[c]=curchan.names[c].substr(0,2)+"+"+curchan.names[c].substr(2);
+                                    }
+                                  }
+                                }
                                 break;
                               case 'h':
-                                if(this.channels[_target.toUpperCase()].names[c].indexOf("%")==-1)
-                                  this.channels[_target.toUpperCase()].names[c]="%"+this.channels[_target.toUpperCase()].names[c];
+                                if(curchan.names[c].indexOf("%")==-1) {
+                                  if(curchan.names[c].indexOf("@")==-1) {
+                                    curchan.names[c]="%"+curchan.names[c];
+                                  }
+                                  else
+                                    curchan.names[c]=curchan.names[c].substr(0,1)+"%"+curchan.names[c].substr(1);
+                                }
                                 break;
                             }
                           }
@@ -778,16 +809,16 @@ function clientConnect(socket) {
                       }
                       else {
                         if(_mode[i]=='k')
-                          this.channels[_target.toUpperCase()].key=_mode_target[_mode_count];
+                          curchan.key=_mode_target[_mode_count];
                         else if(_mode[i]=='l')
-                          this.channels[_target.toUpperCase()].limit=_mode_target[_mode_count];
+                          curchan.limit=_mode_target[_mode_count];
                         else if(_mode[i]=='f')
-                          this.channels[_target.toUpperCase()].forward=_mode_target[_mode_count];
+                          curchan.forward=_mode_target[_mode_count];
                         else if(_mode[i]=='j')
-                          this.channels[_target.toUpperCase()].throttle=_mode_target[_mode_count];
+                          curchan.throttle=_mode_target[_mode_count];
 
-                        if(this.channels[_target.toUpperCase()].modes.indexOf(_mode[i])==-1)
-                          this.channels[_target.toUpperCase()].modes+=_mode[i];
+                        if(curchan.modes.indexOf(_mode[i])==-1)
+                          curchan.modes+=_mode[i];
                         _mode_count++;
                       }
                     }
@@ -796,23 +827,23 @@ function clientConnect(socket) {
                     _regex = new RegExp(_mode[i],"g")
                     if(_sender==_target && _target==this.nick)
                       this.umode=this.umode.replace(_regex,"");
-                    else if(this.channels[_target.toUpperCase()] && (_mode[i]!='o' && _mode[i]!='v' && _mode[i]!='h'))
-                      this.channels[_target.toUpperCase()].modes=this.channels[_target.toUpperCase()].modes.replace(_regex,"");
+                    else if(curchan && (_mode[i]!='o' && _mode[i]!='v' && _mode[i]!='h'))
+                      curchan.modes=curchan.modes.replace(_regex,"");
                     if((_target.indexOf("#")!=-1||_target.indexOf("&")!=-1) && (_mode[i]=='o' || _mode[i]=='k' || _mode[i]=='v' || _mode[i]=='h' || _mode[i]=='l' ||
                                                          _mode[i]=='e' || _mode[i]=='b' || _mode[i]=='I' || _mode[i]=='q' || _mode[i]=='f' ||
                                                          _mode[i]=='j')) {
                       if(_mode[i]=='o' || _mode[i]=='v' || _mode[i]=='h') {
-                        for(c=0;c<this.channels[_target.toUpperCase()].names.length;c++) {
-                          if(this.channels[_target.toUpperCase()].names[c].replace(/\@/,"").replace(/\%/,"").replace(/\+/,"")==_mode_target[_mode_count]) {
+                        for(c=0;c<curchan.names.length;c++) {
+                          if(curchan.names[c].replace(/\@/,"").replace(/\%/,"").replace(/\+/,"")==_mode_target[_mode_count]) {
                             switch(_mode[i]) {
                               case 'o':
-                                this.channels[_target.toUpperCase()].names[c]=this.channels[_target.toUpperCase()].names[c].replace("@","");;
+                                curchan.names[c]=curchan.names[c].replace("@","");;
                                 break;
                               case 'v':
-                                this.channels[_target.toUpperCase()].names[c]=this.channels[_target.toUpperCase()].names[c].replace("+","");;
+                                curchan.names[c]=curchan.names[c].replace("+","");;
                                 break;
                               case 'h':
-                                this.channels[_target.toUpperCase()].names[c]=this.channels[_target.toUpperCase()].names[c].replace("%","");;
+                                curchan.names[c]=curchan.names[c].replace("%","");;
                                 break;
                             }
                           }
@@ -822,15 +853,15 @@ function clientConnect(socket) {
                       }
                       else {
                         if(_mode[i]=='k') {
-                          this.channels[_target.toUpperCase()].key=null;
+                          curchan.key=null;
                           _mode_count++;
                         }
                         else if(_mode[i]=='l')
-                          this.channels[_target.toUpperCase()].limit=null;
+                          curchan.limit=null;
                         else if(_mode[i]=='j')
-                          this.channels[_target.toUpperCase()].throttle=null;
+                          curchan.throttle=null;
                         else if(_mode[i]=='f')
-                          this.channels[_target.toUpperCase()].forward=null;
+                          curchan.forward=null;
                       }
                     }
 
@@ -945,9 +976,9 @@ function clientConnect(socket) {
               _names=lines[n].substr(1).split(" :")[1].trim().split(" ");
               if(!this._getnames[_channel]) {
                 this._getnames[_channel]=true;
-              }
-              if(!this.channels[_channel]) {
-                this.channels[_channel]={};
+                if(!this.channels[_channel]) {
+                  this.channels[_channel]={};
+                }
                 this.channels[_channel].names=[];
               }
               for(x=0;x<_names.length;x++)
