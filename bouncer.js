@@ -19,6 +19,7 @@ var BOUNCER_PORT = config.bouncerPort?config.bouncerPort:8888;
 const BOUNCER_USER = config.bouncerUser?config.bouncerUser:'';
 var BOUNCER_PASSWORD = config.bouncerPassword?config.bouncerPassword:'';
 var BOUNCER_ADMIN = config.bouncerAdmin?config.bouncerAdmin:'';
+var BOUNCER_DEFAULT_OPMODE = config.bouncerDefaultOpmode?config.bouncerDefaultOpmode:false;
 const BOUNCER_MODE = config.mode?config.mode:'bouncer';
 const BOUNCER_TIMEOUT = config.bouncerTimeout?config.bouncerTimeout:0;
 const BUFFER_MAXSIZE = config.bufferMaxSize?config.bufferMaxSize:52428800;
@@ -300,6 +301,7 @@ server = doServer(tlsOptions,function(socket) {
                 this.write(":*jbnc NOTICE * :PASS - Change your password\n");
                 this.write(":*jbnc NOTICE * :CONN - Show which devices are connected to your bouncer user connection\n");
                 this.write(":*jbnc NOTICE * :BUFFERS - Show what buffers exist and their size\n");
+                this.write(":*jbnc NOTICE * :OPMODE - Enable or disable auto-op/hop/voice\n");
                 if(!this.admin)
                   this.write(":*jbnc NOTICE * :ADMIN - Get admin access\n");
                 else {
@@ -313,6 +315,19 @@ server = doServer(tlsOptions,function(socket) {
               }
               else {
                 switch(command[1].toUpperCase().trim()) {
+                  case 'OPMODE':
+                    if(command[2]) {
+                      if(command[2].toLowerCase().trim()=="on") {
+                        connections[this.hash].opmode=true;
+                      }
+                      else if(command[2].toLowerCase().trim()=="off") {
+                        connections[this.hash].opmode=false;
+                      }
+                      else
+                        this.write(":*jbnc NOTICE * :Valid options are ON|OFF\n");
+                    }
+                    this.write(":*jbnc NOTICE * :OPMODE is currently "+(connections[this.hash].opmode?"ON":"OFF")+"\n");
+                    break;
                   case 'STATS':
                     if(this.admin) {
                       this.write(":*jbnc NOTICE * :"+Object.keys(connections).length+" IRC Connections\n");
@@ -680,6 +695,7 @@ function clientConnect(socket) {
     connection.channels={};
     connection.authenticated = false;
     connection.connected = true;
+    connection.opmode = BOUNCER_DEFAULT_OPMODE;
 
     // Temp Buffer
     connection._buffer='';
@@ -797,8 +813,13 @@ function clientConnect(socket) {
                           if(curchan.names[c].replace("@","").replace("+","").replace("%","")==_mode_target[_mode_count]) {
                             switch(_mode[i]) {
                               case 'o':
-                                if(curchan.names[c].indexOf("@")==-1)
+                                if(curchan.names[c].indexOf("@")==-1) {
                                   curchan.names[c]="@"+curchan.names[c];
+                                  if(_mode_target[_mode_count]!=this.nick && curchan.aop.indexOf(_mode_target[_mode_count])<0 && this.opmode) {
+                                    curchan.aop.push(_mode_target[_mode_count]);
+                                  }
+                                }
+                                if(_mode_target[_mode_count]==this.nick) curchan.isop=true;
                                 break;
                               case 'v':
                                 if(curchan.names[c].indexOf("+")==-1) {
@@ -818,7 +839,11 @@ function clientConnect(socket) {
                                       curchan.names[c]=curchan.names[c].substr(0,2)+"+"+curchan.names[c].substr(2);
                                     }
                                   }
+                                  if(_mode_target[_mode_count]!=this.nick && curchan.aov.indexOf(_mode_target[_mode_count])<0 && this.opmode) {
+                                    curchan.aov.push(_mode_target[_mode_count]);
+                                  }
                                 }
+                                if(_mode_target[_mode_count]==this.nick) curchan.isvoice=true;
                                 break;
                               case 'h':
                                 if(curchan.names[c].indexOf("%")==-1) {
@@ -827,7 +852,11 @@ function clientConnect(socket) {
                                   }
                                   else
                                     curchan.names[c]=curchan.names[c].substr(0,1)+"%"+curchan.names[c].substr(1);
+                                  if(_mode_target[_mode_count]!=this.nick && curchan.aoh.indexOf(_mode_target[_mode_count])<0 && this.opmode) {
+                                    curchan.aoh.push(_mode_target[_mode_count]);
+                                  }
                                 }
+                                if(_mode_target[_mode_count]==this.nick) curchan.ishop=true;
                                 break;
                             }
                           }
@@ -865,13 +894,25 @@ function clientConnect(socket) {
                           if(curchan.names[c].replace(/\@/,"").replace(/\%/,"").replace(/\+/,"")==_mode_target[_mode_count]) {
                             switch(_mode[i]) {
                               case 'o':
-                                curchan.names[c]=curchan.names[c].replace("@","");;
+                                curchan.names[c]=curchan.names[c].replace("@","");
+                                if(_mode_target[_mode_count]!=this.nick && curchan.aop.indexOf(_mode_target[_mode_count])>=0 && this.opmode) {
+                                  curchan.aop.splice(curchan.aop.indexOf(_mode_target[_mode_count]),1);
+                                }
+                                if(_mode_target[_mode_count]==this.nick) this.isop=false;
                                 break;
                               case 'v':
-                                curchan.names[c]=curchan.names[c].replace("+","");;
+                                curchan.names[c]=curchan.names[c].replace("+","");
+                                if(_mode_target[_mode_count]!=this.nick && curchan.aov.indexOf(_mode_target[_mode_count])>=0 && this.opmode) {
+                                  curchan.aov.splice(curchan.aov.indexOf(_mode_target[_mode_count]),1);
+                                }
+                                if(_mode_target[_mode_count]==this.nick) this.isvoice=false;
                                 break;
                               case 'h':
-                                curchan.names[c]=curchan.names[c].replace("%","");;
+                                curchan.names[c]=curchan.names[c].replace("%","");
+                                if(_mode_target[_mode_count]!=this.nick && curchan.aoh.indexOf(_mode_target[_mode_count])>=0 && this.opmode) {
+                                  curchan.aoh.splice(curchan.aoh.indexOf(_mode_target[_mode_count]),1);
+                                }
+                                if(_mode_target[_mode_count]==this.nick) this.ishop=false;
                                 break;
                             }
                           }
@@ -928,11 +969,26 @@ function clientConnect(socket) {
                     this.channels[__channel].throttle=null;
                     this.channels[__channel].names=[];
                     this.channels[__channel].name=_channel;
+                    this.channels[__channel].aop=[];
+                    this.channels[__channel].aoh=[];
+                    this.channels[__channel].aov=[];
+                    this.channels[__channel].isop=false;
+                    this.channels[__channel].ishop=false;
+                    this.channels[__channel].isvoice=false;
                   }
                 }
                 else {
                   if(this.channels[__channel]) {
                     this.channels[__channel].names[this.channels[__channel].names.length]=_nick;
+                    if(this.channels[__channel].isop && this.channels[__channel].aop.indexOf(_nick)>=0 && this.opmode) {
+                      this.write("MODE "+this.channels[__channel].name+" +o "+_nick+"\n");
+                    }
+                    if((this.channels[__channel].isop || this.channels[__channel].ishop) && this.channels[__channel].aoh.indexOf(_nick)>=0 && this.opmode) {
+                      this.write("MODE "+this.channels[__channel].name+" +h "+_nick+"\n");
+                    }
+                    if((this.channels[__channel].isop || this.channels[__channel].ishop) && this.channels[__channel].aov.indexOf(_nick)>=0 && this.opmode) {
+                      this.write("MODE "+this.channels[__channel].name+" +v "+_nick+"\n");
+                    }
                   }
                 }
               }

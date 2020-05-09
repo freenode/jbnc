@@ -50,6 +50,7 @@ ingresswebircPassword: a password for webirc clients to use when connecting to j
 bouncerPort: port for bnc (do "+6697" if you want SSL (wrap in "" and put +)),
 bouncerAdmin: admin pass
 bouncerShack: ping ack timeout
+bouncerDefaultOpmode: auto op/voice/hop mode default (can be turned on per client using /jbnc)
 bouncerTimeout: how long until after no clients connected will the user stay connected
 bufferMaxSize: maximum # of bytes a client buffer can hold before its terminated or 0 for unlimited
 ```
