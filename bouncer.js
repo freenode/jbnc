@@ -686,6 +686,7 @@ function clientConnect(socket) {
     connection._getnames={};
 
     connection.on('connect',async function() {
+      this.write("CAP LS 302\n");
       if(SERVER_WEBIRC.length>0) {
         if(this.host==":1")
           this.host="127.0.0.1";
@@ -721,9 +722,22 @@ function clientConnect(socket) {
           if(DEBUG)
             console.log("> "+lines[n]);
           data = lines[n].trim().split(" ");
+          if(data[1]=="CAP") {
+            if(data[3] && data[3]=='LS') {
+              if(lines[n].trim().indexOf("multi-prefix")>0) {
+                this.write("CAP REQ :multi-prefix\n");
+              }
+              else {
+                this.write("CAP END\n");
+              }
+            }
+            else {
+              this.write("CAP END\n");
+            }
+            continue;
+          }
           switch(data[1]) {
             case '001':
-
               if(!this.authenticated) {
                 this.authenticated=true;
                 this.name_original=data[2];
