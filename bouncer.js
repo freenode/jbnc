@@ -248,6 +248,8 @@ server = doServer(tlsOptions,function(socket) {
                     }
                     else {
                       clientConnect(this);
+                      if(DEBUG)
+                        console.log("Connecting to "+this.irc.server+":"+this.irc.port);
                     }
                   }
                 }
@@ -665,6 +667,9 @@ function clientConnect(socket) {
   try {
     connection = _connector(_tempport, socket.irc.server);
   } catch(e) {
+    if(DEBUG) {
+      console.log("Failed to connect to "+socket.irc.server+ ":"+__tempport);
+    }
     _success=false;
   }
   if(_success) {

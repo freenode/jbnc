@@ -7,7 +7,7 @@
 Bouncers are hard to configure.  I felt that we needed an easier one in this world.  This requires nearly no configuration to connect!  Just set a password!
 Join #jbnc on freenode to learn more!
 
-*Currently usable, but in beta test.  Please report bugs by creating an issue on github.  I'm using it as my daily driver.*
+While I'm using this as my daily driver, you may run into some bugs until the beta test period is over.  That said, there are many users who are stably using it today!
 
 ### Features
 - Always on connection to IRC
@@ -127,10 +127,6 @@ SomePassword/buffername
 
 An example buffername could be 'desktop' and on the mobile phone could be 'mobile.'
 
-
-### TODO
-
-Beta Testing
 
 ### Copyright
 (c) 2020 Andrew Lee <andrew@imperialfamily.com>

@@ -1,9 +1,0 @@
-cmd: /usr/bin/stunnel
-env:
-    ENVIRONMENT: production
-log:
-    file: /var/log/stunnel.log
-    age: 86400    # seconds
-    num: 7        # int
-    size: 1000    # MegaBytes
-
