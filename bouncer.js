@@ -16,6 +16,7 @@ else process.exit(1);
 
 // Set config vars
 var BOUNCER_PORT = config.bouncerPort?config.bouncerPort:8888;
+const BOUNCER_IP = config.bouncerIp?config.bouncerIp:null;
 const BOUNCER_USER = config.bouncerUser?config.bouncerUser:'';
 var BOUNCER_PASSWORD = config.bouncerPassword?config.bouncerPassword:'';
 var BOUNCER_ADMIN = config.bouncerAdmin?config.bouncerAdmin:'';
@@ -673,6 +674,8 @@ function clientConnect(socket) {
     _success=false;
   }
   if(_success) {
+    if(DEBUG)
+      console.log("Starting connect");
     // bouncer connections
     connection.parents = [];
     connection.parents[0] = socket;
@@ -709,6 +712,8 @@ function clientConnect(socket) {
 
     connection.on('connect',async function() {
       this.write("CAP LS 302\n");
+      if(DEBUG)
+        console.log("CAP LS 302");
       if(SERVER_WEBIRC.length>0) {
         if(this.host==":1")
           this.host="127.0.0.1";
@@ -732,6 +737,8 @@ function clientConnect(socket) {
       this.write('NICK '+this.nick+'\n');
       this.write('USER '+this.user+' * 0 :'+this.realname+'\n');
       connections[hash(this.nick_original+this.user+this.password+this.server+this.port.toString())] = this;
+      if(DEBUG)
+        console.log("Connection created.");
     });
     connection.on('data', function(d){
       if(d.toString().substr(d.length-1)!="\n")
@@ -1150,5 +1157,8 @@ function clientConnect(socket) {
     socket.end();
   }
 }
+if(BOUNCER_IP)
+  server.listen(BOUNCER_PORT, BOUNCER_IP);
+else
+  server.listen(BOUNCER_PORT);
 
-server.listen(BOUNCER_PORT);

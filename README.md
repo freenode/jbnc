@@ -47,6 +47,7 @@ webircPassword: if its there, it will try webirc authentication
 webircHashIp: true or false if you want to just hide their ip but provide a hash
 webircProxy: true or false if you want to pass their real ip (only matters with stunnel)
 ingresswebircPassword: a password for webirc clients to use when connecting to jbnc
+bouncerIp: ip you want to bind to or leave null
 bouncerPort: port for bnc (do "+6697" if you want SSL (wrap in "" and put +)),
 bouncerAdmin: admin pass
 bouncerShack: ping ack timeout
