@@ -723,10 +723,10 @@ function clientConnect(socket) {
           _reverse_ip = this.host;
         }
         if(SERVER_WEBIRCHASHIP && !SERVER_WEBIRCPROXY) {
-          this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' '+iphash(this.hostonce)+" "+this.host+"\n");
+          this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' jbnc/'+iphash(this.hostonce)+" "+this.host+"\n");
         }
         else if(SERVER_WEBIRCHASHIP && SERVER_WEBIRCPROXY) {
-          this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' '+iphash(this.host)+" "+this.host+"\n");
+          this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' jbnc/'+iphash(this.host)+" "+this.host+"\n");
         }
         else
           this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' '+_reverse_ip+" "+this.host+"\n");
