@@ -28,6 +28,8 @@ const BOUNCER_SHACK = config.bouncerShack?config.bouncerShack:10;
 const SERVER_WEBIRC = config.webircPassword?config.webircPassword:'';
 const SERVER_WEBIRCHASHIP = config.webircHashIp?true:false;
 const SERVER_WEBIRCPROXY = config.webircProxy?true:false;
+const SERVER_TLS_KEY = config.tlsKey?config.tlsKey:'privkey.pem';
+const SERVER_TLS_CERT = config.tlsCert?config.tlsCert:'fullchain.pem';
 const SERVER_PORT = BOUNCER_MODE=='gateway'?(config.serverPort?config.serverPort:0):0;
 const INGRESSWEBIRC = config.ingresswebircPassword?config.ingresswebircPassword:'';
 const SERVER = BOUNCER_MODE=='gateway'?(config.server?config.server:''):'';
@@ -60,8 +62,8 @@ let doServer;
 let tlsOptions;
 if(BOUNCER_PORT.toString().substr(0,1)=='+') {
   tlsOptions = {
-    key: fs.readFileSync("privkey.pem"),
-    cert: fs.readFileSync("fullchain.pem")
+    key: fs.readFileSync(SERVER_TLS_KEY),
+    cert: fs.readFileSync(SERVER_TLS_CERT)
   };
   BOUNCER_PORT=BOUNCER_PORT.substr(1);
   doServer = tls.createServer;
