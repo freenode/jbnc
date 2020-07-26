@@ -555,7 +555,7 @@ server = doServer(tlsOptions,function(socket) {
           connections[this.hash].connected=false;
           connections[this.hash].write("AWAY :jbnc\n");
           if(BOUNCER_TIMEOUT!=0 && BOUNCER_TIMEOUT!=null) {
-            connections[this.hash].gone=setTimeout(function(x){connections[x].end();},BOUNCER_TIMEOUT*1000,this.hash);
+            connections[this.hash].gone=setTimeout(function(x){connections[x].end();delete connections[x];},BOUNCER_TIMEOUT*1000,this.hash);
           }
         }
       }
