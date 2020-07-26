@@ -743,13 +743,17 @@ function clientConnect(socket) {
         console.log("Connection created.");
     });
     connection.on('data', function(d){
-      if(d.toString().substr(d.length-1)!="\n")
-        this._buffer+=d.toString();
-      else {
-        _d = this._buffer + d.toString();
-        this._buffer='';
-        lines= _d.split("\n");
-        for(n=0;n<lines.length;n++) {
+      _d = this._buffer + d.toString();
+      let lines = _d.toString().split('\n');
+      if (lines[lines.length - 1] !== '') {
+          this._buffer = lines.pop();
+      } else {
+          lines.pop();
+          this._buffer = '';
+      }
+      
+      if (true) {
+        for(let n=0;n<lines.length;n++) {
           if(DEBUG)
             console.log("> "+lines[n]);
           data = lines[n].trim().split(" ");
