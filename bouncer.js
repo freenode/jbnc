@@ -11,8 +11,13 @@ const reverse = require('util').promisify(dns.reverse);
 // Load jbnc.conf
 _config = process.argv[2]?process.argv[2]:"jbnc.conf";
 var config = {};
-if(fs.existsSync(_config)) config = JSON.parse(fs.readFileSync(_config));
-else process.exit(1);
+if(fs.existsSync(_config)) {
+  config = JSON.parse(fs.readFileSync(_config));
+}
+else {
+  console.error(`No config file found: ${_config}`);
+  process.exit(1);
+}
 
 // Set config vars
 var BOUNCER_PORT = config.bouncerPort?config.bouncerPort:8888;
