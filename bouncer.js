@@ -1,4 +1,4 @@
-// jbnc v0.3
+// jbnc v0.4
 // Copyright (C) 2020 Andrew Lee <andrew@imperialfamily.com>
 // All Rights Reserved.
 const tls = require('tls');
