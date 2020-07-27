@@ -199,8 +199,8 @@ server = doServer(tlsOptions,function(socket) {
                       _server = _server_pass[0].split(":");
                       this.irc.server = _server[0];
                       this.irc.port = (_server[1] ? _server[1].trim() : 6667);
-                      if(_server_pass[1]) {
-                        this.irc.serverpassword=_server_pass[1];
+                      if(origin[0].split("||")[0]) {
+                        this.irc.serverpassword=origin[0].split("||")[0];
                       }
                       if(origin[2])
                         this.clientbuffer=origin[2].trim();
@@ -448,6 +448,7 @@ server = doServer(tlsOptions,function(socket) {
                     this.write(":*jbnc NOTICE * :Sayonara.\n");
                     connections[this.hash].write("QUIT :jbnc gateway\n");
                     connections[this.hash].end();
+                    delete connections[this.hash];
                     break;
                   case 'PASS':
                     if(command[3]) {
@@ -600,13 +601,15 @@ function clientReconnect(socket) {
     socket.write(connection.motd+"\n");
     socket.write(":*jbnc 376 "+connection.nick+" :End of /MOTD command.\n");
   }
+  
+  socket.write(":*jbnc PRIVMSG "+connection.nick+" :Attaching you to the network\n");
 
   // Loop thru channels and send JOINs
   for(key in connection.channels) {
     if(connection.channels.hasOwnProperty(key)) {
       _channel=connection.channels[key];
 
-      socket.write(":"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN :"+_channel.name+"\n");
+      socket.write("@time=null;msgid=null :"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN :"+_channel.name+"\n");
       _mode_params='';
       for(x=0;x<_channel.modes.length;x++) {
         switch(_channel.modes[x]) {
@@ -771,6 +774,12 @@ function clientConnect(socket) {
                 this.write("CAP REQ :userhost-in-names\n");
                 this.userhostInNames=true;
               }
+              if(lines[n].trim().indexOf("server-time")>=0) {
+                this.write("CAP REQ :server-time\n");
+              }
+              if(lines[n].trim().indexOf("message-tags")>=0) {
+                this.write("CAP REQ :message-tags\n");
+              }
               this.write("CAP END\n");
             }
             else {
@@ -778,7 +787,8 @@ function clientConnect(socket) {
             }
             continue;
           }
-          switch(data[1]) {
+          let s = (data[2]=="JOIN" || data[2]=="PART" || data[2]=="QUIT" || data[2]=="MODE" || data[2]=="PING" || data[2]=="NICK" ? data[2] : data[1]);
+          switch(s) {
             case '001':
               if(!this.authenticated) {
                 this.authenticated=true;
@@ -798,19 +808,36 @@ function clientConnect(socket) {
               break;
             case '324':
             case 'MODE':
-              _target=data[1]=='324'?data[3].trim():data[2].trim();
-              _sender=data[0].substr(1).split("!")[0];
-              _mode = data[1]=='324'?data[4].trim():data[3].trim();
-              _mode = _mode.indexOf(":")!=-1?_mode.substr(1):_mode;
-              _mode_target=[];
-              if(data[1]=='324') {
-                if(data[5])
-                  _mode_target = data.slice(5,data.length);
+              if ( data[2] == "MODE" ) {
+                _target=data[1]=='324'?data[3].trim():data[2].trim();
+                _sender=data[1].substr(1).split("!")[0];
+                _mode = data[1]=='324'?data[4].trim():data[3].trim();
+                _mode = _mode.indexOf(":")!=-1?_mode.substr(1):_mode;
+                _mode_target=[];
+                if(data[1]=='324') {
+                  if(data[5])
+                    _mode_target = data.slice(5,data.length);
+                }
+                else {
+                  if(data[4])
+                    _mode_target = data.slice(4,data.length);
+                }
+              } else {
+                _target=data[1]=='324'?data[3].trim():data[2].trim();
+                _sender=data[0].substr(1).split("!")[0];
+                _mode = data[1]=='324'?data[4].trim():data[3].trim();
+                _mode = _mode.indexOf(":")!=-1?_mode.substr(1):_mode;
+                _mode_target=[];
+                if(data[1]=='324') {
+                  if(data[5])
+                    _mode_target = data.slice(5,data.length);
+                }
+                else {
+                  if(data[4])
+                    _mode_target = data.slice(4,data.length);
+                }
               }
-              else {
-                if(data[4])
-                  _mode_target = data.slice(4,data.length);
-              }
+              
               _mode_count = 0;
               _add = true;
               // walk thru modes
@@ -977,16 +1004,16 @@ function clientConnect(socket) {
               this.motd+=lines[n]+"\n";
               break;
             case 'JOIN':
-              _temp = data[0].substr(1).split("!");
+              _temp = data[1].substr(1).split("!");
               _nick = _temp[0];
               if(_temp[1])
                 _userhost = _temp[1];
               if(_temp[1] && this.nick==_nick) {
                 this.ircuser=_temp[1].split("@")[0];
               }
-              _channels = data[2].substr(0).trim().split(",");
-              if(data[2].indexOf(":")!=-1)
-                _channels = data[2].substr(1).trim().split(",");
+              _channels = data[3].substr(0).trim().split(",");
+              if(data[3].indexOf(":")!=-1)
+                _channels = data[3].substr(1).trim().split(",");
               for(x=0;x<_channels.length;x++) {
                 _channel=_channels[x];
                 __channel=_channel.toUpperCase();
@@ -1068,8 +1095,8 @@ function clientConnect(socket) {
               }
               break;
             case 'PART':
-              _target=data[2].toUpperCase().trim();
-              _sender=data[0].substr(1).split("!")[0];
+              _target=data[3].toUpperCase().trim();
+              _sender=data[1].substr(1).split("!")[0];
               if(_sender==this.nick) {
                 delete this.channels[_target];
               }
@@ -1082,7 +1109,7 @@ function clientConnect(socket) {
               }
               break;
             case 'QUIT':
-              _sender=data[0].substr(1).split("!")[0];
+              _sender=data[1].substr(1).split("!")[0];
               for (key in this.channels) {
                 if (this.channels.hasOwnProperty(key)) {
                   for(x=0;x<this.channels[key].names.length;x++)
@@ -1115,8 +1142,8 @@ function clientConnect(socket) {
               this._getnames[_channel]=false;
               break;
             case 'NICK':
-              if(data[0].substr(1).split("!")[0]==this.nick) {
-                this.nick=data[2].substr(1).trim();
+              if(data[1].substr(1).split("!")[0]==this.nick) {
+                this.nick=data[3].substr(1).trim();
               }
               break;
             case '433':
@@ -1130,6 +1157,10 @@ function clientConnect(socket) {
           }
           if(data[0] == "PING") {
             this.write("PONG "+data[1].substr(1).trim()+"\n");
+            continue;
+          }
+          if(data[1] == "PING") {
+            this.write("PONG "+data[2].substr(1).trim()+"\n");
             continue;
           }
           if(lines[n].length>1) {
