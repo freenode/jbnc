@@ -298,7 +298,7 @@ server = doServer(tlsOptions,function(socket) {
             case 'NICK':
               if(this.hash && connections[this.hash] && command[1]) {
                 connections[this.hash].write("NICK "+command[1]+"\n");
-                connections[this.hash].nick=command[1];
+                //connections[this.hash].nick=command[1];
               }
               break;
             case 'JBNC':
