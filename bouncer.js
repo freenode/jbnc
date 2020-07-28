@@ -298,7 +298,7 @@ server = doServer(tlsOptions,function(socket) {
             case 'NICK':
               if(this.hash && connections[this.hash] && command[1]) {
                 connections[this.hash].write("NICK "+command[1]+"\n");
-                connections[this.hash].nick=command[1];
+                //connections[this.hash].nick=command[1];
               }
               break;
             case 'JBNC':
@@ -561,7 +561,7 @@ server = doServer(tlsOptions,function(socket) {
           connections[this.hash].connected=false;
           connections[this.hash].write("AWAY :jbnc\n");
           if(BOUNCER_TIMEOUT!=0 && BOUNCER_TIMEOUT!=null) {
-            connections[this.hash].gone=setTimeout(function(x){connections[x].end();delete connections[x];},BOUNCER_TIMEOUT*1000,this.hash);
+            connections[this.hash].gone=setTimeout(function(x){try{connections[x].end();}catch(e){} try{delete connections[x];}catch(e){} },BOUNCER_TIMEOUT*1000,this.hash);
           }
         }
       }
