@@ -787,7 +787,7 @@ function clientConnect(socket) {
             }
             continue;
           }
-          let s = (data[2]=="JOIN" || data[2]=="PART" || data[2]=="QUIT" || data[2]=="MODE" || data[2]=="PING" || data[2]=="NICK" ? data[2] : data[1]);
+          let s = (data[2]=="JOIN" || data[2]=="PART" || data[2]=="QUIT" || data[2]=="MODE" || data[2]=="PING" || data[2]=="NICK" || data[2]=="KICK" ? data[2] : data[1]);
           switch(s) {
             case '001':
               if(!this.authenticated) {
@@ -1082,8 +1082,8 @@ function clientConnect(socket) {
               this.channels[_channel].topic_time=_time;
               break;
             case 'KICK':
-              _target=data[3].trim();
-              _channel=data[2].toUpperCase().trim();
+              _target=data[4].trim();
+              _channel=data[3].toUpperCase().trim();
               if(_target==this.nick) {
                 delete this.channels[_channel];
               }
