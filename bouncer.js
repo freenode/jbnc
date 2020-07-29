@@ -1133,8 +1133,6 @@ function clientConnect(socket) {
                 this.channels[_channel].names.push(_names[x].trim().split("!")[0]);
                 if(_names[x].trim().indexOf("!")>=0)
                   this.channels[_channel].userhosts.push(_names[x].trim().split("!")[1]);
-                else
-                  this.channels[_channel].userhosts.push("*@*");
               }
               break;
             case '366':
