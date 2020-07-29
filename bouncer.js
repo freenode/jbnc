@@ -1112,11 +1112,13 @@ function clientConnect(socket) {
               _sender=data[1].substr(1).split("!")[0];
               for (key in this.channels) {
                 if (this.channels.hasOwnProperty(key)) {
-                  for(x=0;x<this.channels[key].names.length;x++)
-                    if(this.channels[key].names[x].replace("@","").replace("+","").replace("~","").replace("%","")==_sender)
-                      break;
-                  this.channels[key].names.splice(x,1);
-                  this.channels[key].userhosts.splice(x,1);
+                  for(x=0;x<this.channels[key].names.length;x++) {
+                    if(this.channels[key].names[x].replace("@","").replace("+","").replace("~","").replace("%","")==_sender) {
+                    this.channels[key].names.splice(x,1);
+                    this.channels[key].userhosts.splice(x,1);
+                    break;
+                    }
+                  }
                 }
               }
               break;
@@ -1141,19 +1143,21 @@ function clientConnect(socket) {
               this._getnames[_channel]=false;
               break;
             case 'NICK':
-              _sender = data[1].substr(1);
+              _sender = data[1].substr(1).split("!")[0];
               _new = data[3].substr(1).trim();
+
               if(_sender==this.nick) {
                 this.nick=_new;
               }
+
               for (key in this.channels) {
                 if (this.channels.hasOwnProperty(key)) {
                   for(x=0;x<this.channels[key].names.length;x++) {
+                    if(this.channels[key].names[x].replace("@","").replace("+","").replace("~","").replace("%","")==_sender) {
                     _statut = ( /(@|%|\+)/.test(this.channels[key].names[x].substr(0,1)) ? this.channels[key].names[x].substr(0,1) : "" );
-                    if(this.channels[key].names[x].replace("@","").replace("+","").replace("~","").replace("%","")==_sender){
-                      this.channels[key].names.splice(x,1);
-                      this.channels[key].names.push(_statut+_new);
-                      break;
+                    this.channels[key].names.splice(x,1);
+                    this.channels[key].names.push(_statut+_new);
+                    break;
                     }
                   }
                 }
