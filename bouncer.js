@@ -809,9 +809,9 @@ function clientConnect(socket) {
             case '324':
             case 'MODE':
               if ( data[2] == "MODE" ) {
-                _target=data[1]=='324'?data[3].trim():data[2].trim();
+                _target=data[1]=='324'?data[3].trim():data[3].trim();
                 _sender=data[1].substr(1).split("!")[0];
-                _mode = data[1]=='324'?data[4].trim():data[3].trim();
+                _mode = data[1]=='324'?data[4].trim():data[4].trim();
                 _mode = _mode.indexOf(":")!=-1?_mode.substr(1):_mode;
                 _mode_target=[];
                 if(data[1]=='324') {
@@ -819,8 +819,8 @@ function clientConnect(socket) {
                     _mode_target = data.slice(5,data.length);
                 }
                 else {
-                  if(data[4])
-                    _mode_target = data.slice(4,data.length);
+                  if(data[5])
+                    _mode_target = data.slice(5,data.length);
                 }
               } else {
                 _target=data[1]=='324'?data[3].trim():data[2].trim();
@@ -1089,7 +1089,7 @@ function clientConnect(socket) {
               }
               else if(this.channels[_channel]) {
                 for(x=0;x<this.channels[_channel].names.length;x++)
-                  if(this.channels[_channel].names[x].replace("@","").replace("\+","").replace("~","").replace("%","")==_target)
+                  if(this.channels[_channel].names[x].replace("@","").replace("+","").replace("~","").replace("%","")==_target)
                     break;
                 this.channels[_channel].names.splice(x,1);
               }
@@ -1102,7 +1102,7 @@ function clientConnect(socket) {
               }
               else if(this.channels[_target]) {
                 for(x=0;x<this.channels[_target].names.length;x++)
-                  if(this.channels[_target].names[x].replace("@","").replace("\+","").replace("~","").replace("%","")==_sender)
+                  if(this.channels[_target].names[x].replace("@","").replace("+","").replace("~","").replace("%","")==_sender)
                     break;
                 this.channels[_target].names.splice(x,1);
                 this.channels[_target].userhosts.splice(x,1);
@@ -1113,9 +1113,10 @@ function clientConnect(socket) {
               for (key in this.channels) {
                 if (this.channels.hasOwnProperty(key)) {
                   for(x=0;x<this.channels[key].names.length;x++)
-                    if(this.channels[key].names[x].replace("@","").replace("\+","").replace("~","").replace("%","")==_sender)
+                    if(this.channels[key].names[x].replace("@","").replace("+","").replace("~","").replace("%","")==_sender)
                       break;
                   this.channels[key].names.splice(x,1);
+                  this.channels[key].userhosts.splice(x,1);
                 }
               }
               break;
@@ -1140,8 +1141,22 @@ function clientConnect(socket) {
               this._getnames[_channel]=false;
               break;
             case 'NICK':
-              if(data[1].substr(1).split("!")[0]==this.nick) {
-                this.nick=data[3].substr(1).trim();
+              _sender = data[1].substr(1);
+              _new = data[3].substr(1).trim();
+              if(_sender==this.nick) {
+                this.nick=_new;
+              }
+              for (key in this.channels) {
+                if (this.channels.hasOwnProperty(key)) {
+                  for(x=0;x<this.channels[key].names.length;x++) {
+                    _statut = ( /(@|%|\+)/.test(this.channels[key].names[x].substr(0,1)) ? this.channels[key].names[x].substr(0,1) : "" );
+                    if(this.channels[key].names[x].replace("@","").replace("+","").replace("~","").replace("%","")==_sender){
+                      this.channels[key].names.splice(x,1);
+                      this.channels[key].names.push(_statut+_new);
+                      break;
+                    }
+                  }
+                }
               }
               break;
             case '433':
