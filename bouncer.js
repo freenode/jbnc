@@ -611,6 +611,10 @@ function clientReconnect(socket) {
 
       socket.write("@time=null;msgid=null :"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN :"+_channel.name+"\n");
       _mode_params='';
+    
+      if ( typeof _channel.modes === 'undefined' )
+        _channel.modes = "";
+    
       for(x=0;x<_channel.modes.length;x++) {
         switch(_channel.modes[x]) {
           case 'k': _mode_params+=' '+_channel.key;
