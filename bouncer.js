@@ -812,35 +812,28 @@ function clientConnect(socket) {
               break;
             case '324':
             case 'MODE':
-              if ( data[2] == "MODE" ) {
-                _target=data[1]=='324'?data[3].trim():data[3].trim();
+              if (data[1]=='324') {
+                _target=data[3].trim();
                 _sender=data[1].substr(1).split("!")[0];
-                _mode = data[1]=='324'?data[4].trim():data[4].trim();
-                _mode = _mode.indexOf(":")!=-1?_mode.substr(1):_mode;
-                _mode_target=[];
-                if(data[1]=='324') {
-                  if(data[5])
-                    _mode_target = data.slice(5,data.length);
-                }
-                else {
-                  if(data[5])
-                    _mode_target = data.slice(5,data.length);
-                }
-              } else {
-                _target=data[1]=='324'?data[3].trim():data[2].trim();
-                _sender=data[0].substr(1).split("!")[0];
-                _mode = data[1]=='324'?data[4].trim():data[3].trim();
-                _mode = _mode.indexOf(":")!=-1?_mode.substr(1):_mode;
-                _mode_target=[];
-                if(data[1]=='324') {
-                  if(data[5])
-                    _mode_target = data.slice(5,data.length);
-                }
-                else {
-                  if(data[4])
-                    _mode_target = data.slice(4,data.length);
-                }
+                _mode=data[4].trim();
+                if(data[5])
+                _mode_target = data.slice(5,data.length);
               }
+              else if (data[2]=='MODE') {
+                _target=data[3].trim();
+                _sender=data[1].substr(1).split("!")[0];
+                _mode=data[4].trim();
+                if(data[5])
+                _mode_target = data.slice(5,data.length);
+              } else {
+                _target=data[2].trim();
+                _sender=data[2];
+                _mode=data[3].trim();
+                if(data[4])
+                _mode_target = data.slice(4,data.length);
+              }
+
+              _mode = _mode.indexOf(":")!=-1?_mode.substr(1):_mode;
               
               _mode_count = 0;
               _add = true;
