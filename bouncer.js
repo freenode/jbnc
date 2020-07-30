@@ -611,6 +611,10 @@ function clientReconnect(socket) {
 
       socket.write("@time=null;msgid=null :"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN :"+_channel.name+"\n");
       _mode_params='';
+    
+      if ( typeof _channel.modes === 'undefined' )
+        _channel.modes = "";
+    
       for(x=0;x<_channel.modes.length;x++) {
         switch(_channel.modes[x]) {
           case 'k': _mode_params+=' '+_channel.key;
@@ -808,35 +812,28 @@ function clientConnect(socket) {
               break;
             case '324':
             case 'MODE':
-              if ( data[2] == "MODE" ) {
-                _target=data[1]=='324'?data[3].trim():data[3].trim();
+              if (data[1]=='324') {
+                _target=data[3].trim();
                 _sender=data[1].substr(1).split("!")[0];
-                _mode = data[1]=='324'?data[4].trim():data[4].trim();
-                _mode = _mode.indexOf(":")!=-1?_mode.substr(1):_mode;
-                _mode_target=[];
-                if(data[1]=='324') {
-                  if(data[5])
-                    _mode_target = data.slice(5,data.length);
-                }
-                else {
-                  if(data[5])
-                    _mode_target = data.slice(5,data.length);
-                }
-              } else {
-                _target=data[1]=='324'?data[3].trim():data[2].trim();
-                _sender=data[0].substr(1).split("!")[0];
-                _mode = data[1]=='324'?data[4].trim():data[3].trim();
-                _mode = _mode.indexOf(":")!=-1?_mode.substr(1):_mode;
-                _mode_target=[];
-                if(data[1]=='324') {
-                  if(data[5])
-                    _mode_target = data.slice(5,data.length);
-                }
-                else {
-                  if(data[4])
-                    _mode_target = data.slice(4,data.length);
-                }
+                _mode=data[4].trim();
+                if(data[5])
+                _mode_target = data.slice(5,data.length);
               }
+              else if (data[2]=='MODE') {
+                _target=data[3].trim();
+                _sender=data[1].substr(1).split("!")[0];
+                _mode=data[4].trim();
+                if(data[5])
+                _mode_target = data.slice(5,data.length);
+              } else {
+                _target=data[2].trim();
+                _sender=data[2];
+                _mode=data[3].trim();
+                if(data[4])
+                _mode_target = data.slice(4,data.length);
+              }
+
+              _mode = _mode.indexOf(":")!=-1?_mode.substr(1):_mode;
               
               _mode_count = 0;
               _add = true;
@@ -1112,11 +1109,13 @@ function clientConnect(socket) {
               _sender=data[1].substr(1).split("!")[0];
               for (key in this.channels) {
                 if (this.channels.hasOwnProperty(key)) {
-                  for(x=0;x<this.channels[key].names.length;x++)
-                    if(this.channels[key].names[x].replace("@","").replace("+","").replace("~","").replace("%","")==_sender)
-                      break;
-                  this.channels[key].names.splice(x,1);
-                  this.channels[key].userhosts.splice(x,1);
+                  for(x=0;x<this.channels[key].names.length;x++) {
+                    if(this.channels[key].names[x].replace("@","").replace("+","").replace("~","").replace("%","")==_sender) {
+                    this.channels[key].names.splice(x,1);
+                    this.channels[key].userhosts.splice(x,1);
+                    break;
+                    }
+                  }
                 }
               }
               break;
@@ -1141,19 +1140,21 @@ function clientConnect(socket) {
               this._getnames[_channel]=false;
               break;
             case 'NICK':
-              _sender = data[1].substr(1);
+              _sender = data[1].substr(1).split("!")[0];
               _new = data[3].substr(1).trim();
+
               if(_sender==this.nick) {
                 this.nick=_new;
               }
+
               for (key in this.channels) {
                 if (this.channels.hasOwnProperty(key)) {
                   for(x=0;x<this.channels[key].names.length;x++) {
+                    if(this.channels[key].names[x].replace("@","").replace("+","").replace("~","").replace("%","")==_sender) {
                     _statut = ( /(@|%|\+)/.test(this.channels[key].names[x].substr(0,1)) ? this.channels[key].names[x].substr(0,1) : "" );
-                    if(this.channels[key].names[x].replace("@","").replace("+","").replace("~","").replace("%","")==_sender){
-                      this.channels[key].names.splice(x,1);
-                      this.channels[key].names.push(_statut+_new);
-                      break;
+                    this.channels[key].names.splice(x,1);
+                    this.channels[key].names.push(_statut+_new);
+                    break;
                     }
                   }
                 }
