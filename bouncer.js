@@ -222,7 +222,7 @@ server = doServer(tlsOptions,function(socket) {
               }
               else if(commands[1]) {
                 this.irc.nick=commands[1].trim();
-                if(this.irc.user) {
+                /*if(this.irc.user) {
                   this.hash=hash(this.irc.nick+this.irc.user+this.irc.password+this.irc.server+this.irc.port.toString());
                   if(connections[socket.hash]) {
                     clientReconnect(this);
@@ -230,7 +230,7 @@ server = doServer(tlsOptions,function(socket) {
                   else {
                     clientConnect(this);
                   }
-                }
+                }*/
               }
               break;
             case 'USER':
@@ -446,9 +446,11 @@ server = doServer(tlsOptions,function(socket) {
                     break;
                   case 'QUIT':
                     this.write(":*jbnc NOTICE * :Sayonara.\n");
-                    connections[this.hash].write("QUIT :jbnc gateway\n");
-                    connections[this.hash].end();
-                    delete connections[this.hash];
+                    if (typeof connections[this.hash] !== 'undefined') {
+                      connections[this.hash].write("QUIT :jbnc gateway\n");
+                      connections[this.hash].end();
+                      delete connections[this.hash];
+                    }
                     break;
                   case 'PASS':
                     if(command[3]) {
@@ -612,8 +614,12 @@ function clientReconnect(socket) {
       socket.write("@time=null;msgid=null :"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN :"+_channel.name+"\n");
       _mode_params='';
     
-      if ( typeof _channel.modes === 'undefined' )
-        _channel.modes = "";
+        if ( typeof _channel.modes === 'undefined' )
+          _channel.modes = "";
+
+        if ( typeof _channel.topic === 'undefined' )
+          _channel.topic = "";
+
     
       for(x=0;x<_channel.modes.length;x++) {
         switch(_channel.modes[x]) {
