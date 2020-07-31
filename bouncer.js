@@ -620,8 +620,6 @@ function clientReconnect(socket) {
         if ( typeof _channel.topic === 'undefined' )
           _channel.topic = "";
 
-        if ( typeof _channel.topic === 'undefined' )
-          _channel.topic = "";
     
       for(x=0;x<_channel.modes.length;x++) {
         switch(_channel.modes[x]) {
