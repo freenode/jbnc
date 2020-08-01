@@ -479,6 +479,8 @@ server = doServer(tlsOptions,function(socket) {
               }
               break;
             default:
+              if(typeof connections[this.hash] === 'undefined' )
+              continue;
               // supress joins of channels we are already in because some clients dont react properly.
               if(input[i].toString().substr(0,4)=="JOIN") {
                 command=input[i].toString().trim().split(" ");
