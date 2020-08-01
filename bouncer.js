@@ -134,7 +134,7 @@ server = doServer(tlsOptions,function(socket) {
         if(DEBUG)
           console.log("<" +input[i]);
         
-        if ( typeof connections[this.hash] !== 'undefined' )
+        if ( typeof connections[this.hash] === 'undefined' )
           continue;
         
         let commands=input[i].split(" ");
