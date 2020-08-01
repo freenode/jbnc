@@ -134,8 +134,8 @@ server = doServer(tlsOptions,function(socket) {
         if(DEBUG)
           console.log("<" +input[i]);
         
-        if ( connections[this.hash] ) 
-        continue;
+        if ( typeof connections[this.hash] !== 'undefined' )
+          continue;
         
         let commands=input[i].split(" ");
         let command=commands[0].toUpperCase();
