@@ -133,6 +133,10 @@ server = doServer(tlsOptions,function(socket) {
       for(i=0;i<input.length;i++) {
         if(DEBUG)
           console.log("<" +input[i]);
+        
+        if ( connections[this.hash] ) 
+        continue;
+        
         let commands=input[i].split(" ");
         let command=commands[0].toUpperCase();
         if(!this.connected && !this.badauth) {
