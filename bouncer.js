@@ -1139,7 +1139,7 @@ function clientConnect(socket) {
               }
               for(x=0;x<_names.length;x++) {
                 this.channels[_channel].names.push(_names[x].trim().split("!")[0]);
-                if(_names[x].trim().indexOf("!")>=0)
+                if(typeof this.channels[_channel].userhosts !== 'undefined' && _names[x].trim().indexOf("!")>=0)
                   this.channels[_channel].userhosts.push(_names[x].trim().split("!")[1]);
               }
               break;
