@@ -1,4 +1,4 @@
-// jbnc v0.4
+// jbnc v0.5
 // Copyright (C) 2020 Andrew Lee <andrew@imperialfamily.com>
 // All Rights Reserved.
 const tls = require('tls');
@@ -29,6 +29,8 @@ var BOUNCER_DEFAULT_OPMODE = config.bouncerDefaultOpmode?config.bouncerDefaultOp
 const BOUNCER_MODE = config.mode?config.mode:'bouncer';
 const BOUNCER_TIMEOUT = config.bouncerTimeout?config.bouncerTimeout:0;
 const BUFFER_MAXSIZE = config.bufferMaxSize?config.bufferMaxSize:52428800;
+const BUFFER_LINEMAX = config.lineMax?config.lineMax:1500;
+const SASL = config.sasl?config.sasl:false;													
 const BOUNCER_SHACK = config.bouncerShack?config.bouncerShack:10;
 const SERVER_WEBIRC = config.webircPassword?config.webircPassword:'';
 const SERVER_WEBIRCHASHIP = config.webircHashIp?true:false;
@@ -61,6 +63,18 @@ function hash(data) {
 function iphash(data) {
   return crypto.createHash('md5').update(data).digest('hex').substr(0,6);
 }
+
+String.prototype.hexEncode = function(){
+  var hex, i;
+
+  var result = "";
+  for (i=0; i<this.length; i++) {
+      hex = this.charCodeAt(i).toString(16);
+      result += ("000"+hex).slice(-4);
+  }
+
+  return result
+}	   
 // Bouncer Server
 let server;
 let doServer;
@@ -119,11 +133,14 @@ server = doServer(tlsOptions,function(socket) {
   },BOUNCER_SHACK*1000,socket);
 
   socket.on('data', function(chunk) {
-    let _chunk = chunk.toString();
-    if(_chunk.substr(_chunk.length-1)!="\n")
-      this._buffer+=_chunk;
-    else {
-      let input = (this._buffer + _chunk.trim());
+    _chunk = chunk.toString();
+    let lines = _chunk.toString().split('\n');
+    if (_chunk.substr(_chunk.length-1) != '\n') {
+        this._buffer = lines[0].trim()+"\n";
+    }
+
+    if (true) {
+      input = (this._buffer + _chunk.trim());
       if(this.connected && !this.badauth && (connections[this.hash] && connections[this.hash].authenticated) &&this._outbuffer.length>0) {
         input=this._outbuffer+input;
         this._outbuffer='';
@@ -169,15 +186,15 @@ server = doServer(tlsOptions,function(socket) {
                   this.irc.password=null;
                   this.irc.realname=null;
                   this.irc.serverpassword=null;
-
+                  this.irc.nickpassword=null;
                   origin = commands[1].trim().split("/");
                   if(origin[0].indexOf("||")>0)
                     this.irc.password = origin[0].split("||")[1];
                   else
                     this.irc.password = origin[0];
 
-                  if(this.irc.password.length < 8) {
-                    this.write(":*jbnc NOTICE * :*** Password too short (min length 8) ***\n");
+                  if(this.irc.password.length < 6) {
+                    this.write(":*jbnc NOTICE * :*** Password too short (min length 6) ***\n");
                     this.badauth=true;
                     this.end();
                   }
@@ -202,6 +219,9 @@ server = doServer(tlsOptions,function(socket) {
                       if(origin[0].split("||")[0]) {
                         this.irc.serverpassword=origin[0].split("||")[0];
                       }
+                      if(origin[0].split("||")[1]) {
+                        this.irc.nickpassword=origin[0].split("||")[1];
+                      }							
                       if(origin[2])
                         this.clientbuffer=origin[2].trim();
                     }
@@ -250,7 +270,7 @@ server = doServer(tlsOptions,function(socket) {
                 }
                 else {
                   if(this.irc.nick) {
-                    this.hash=hash(this.irc.nick+this.irc.user+this.irc.password+this.irc.server+this.irc.port.toString());
+                    this.hash=hash(this.irc.nick+this.irc.password+this.irc.server+this.irc.port.toString());
                     if(connections[socket.hash]) {
                       clientReconnect(this);
                     }
@@ -458,7 +478,7 @@ server = doServer(tlsOptions,function(socket) {
                         connections[this.hash].password=hash(command[3]);
                         this.irc.password=connections[this.hash].password;
                         this.write(":*jbnc NOTICE * :Password changed to "+command[3]+"\n");
-                        _newhash=hash(this.irc.nick+this.irc.user+this.irc.password+this.irc.server+this.irc.port.toString());
+                        _newhash=hash(this.irc.nick+this.irc.password+this.irc.server+this.irc.port.toString());
                         connections[_newhash]=connections[this.hash];
                         delete connections[this.hash];
                         this.hash=_newhash;
@@ -491,7 +511,7 @@ server = doServer(tlsOptions,function(socket) {
                   passwords=command[2].split(",");
                 l=0;
                 for(m=0;m<channels.length;m++) {
-                  if(connections[this.hash].channels[channels[m].trim().toUpperCase()]) {
+                  if(typeof connections[this.hash].channels !== 'undefined' && connections[this.hash].channels[channels[m].trim().toUpperCase()]) {
                     if(command[2] && l<passwords.length)
                       l++;
                     continue;
@@ -563,7 +583,7 @@ server = doServer(tlsOptions,function(socket) {
         connections[this.hash].parents.splice(i,1);
         if(connections[this.hash].parents.length==0) {
           connections[this.hash].connected=false;
-          connections[this.hash].write("AWAY :jbnc\n");
+          connections[this.hash].write("AWAY :away\n");
           if(BOUNCER_TIMEOUT!=0 && BOUNCER_TIMEOUT!=null) {
             connections[this.hash].gone=setTimeout(function(x){try{connections[x].end();}catch(e){} try{delete connections[x];}catch(e){} },BOUNCER_TIMEOUT*1000,this.hash);
           }
@@ -581,101 +601,106 @@ server = doServer(tlsOptions,function(socket) {
 
 // IRC Client
 function clientReconnect(socket) {
-  let connection=connections[socket.hash];
-  connection.parents[connection.parents.length] = socket;
-  clearTimeout(connection.gone);
-  socket.connected=true;
-  newdevice=false;
-  if(!connection.buffers[socket.clientbuffer]) {
-    connection.buffers[socket.clientbuffer]={data:'',connected:true};
-    newdevice=true;
-  }
-  else
-    connection.buffers[socket.clientbuffer].connected=true;
-  socket.write(connection.connectbuf+"\n");
-  if(connection.nick!=socket.irc.nick)
-    socket.write(":"+connection.nick_original+" NICK "+connection.nick+"\n");
-  if(!connection.connected) {
-    connection.write("AWAY\n");
-    connection.connected=true;
-  }
-  if(newdevice) {
-    connection.write("LUSERS\n");
-    socket.write(":*jbnc 375 "+connection.nick+" :- Message of the Day -\n");
-    socket.write(connection.motd+"\n");
-    socket.write(":*jbnc 376 "+connection.nick+" :End of /MOTD command.\n");
-  }
-  
-  socket.write(":*jbnc PRIVMSG "+connection.nick+" :Attaching you to the network\n");
+  let _success = true;
+  if ( socket.connected ) 
+    _success = false;
+  if ( _success ) {
+    let connection=connections[socket.hash];
+    connection.parents[connection.parents.length] = socket;
+    clearTimeout(connection.gone);
+    socket.connected=true;
+    newdevice=false;
+    if(!connection.buffers[socket.clientbuffer]) {
+      connection.buffers[socket.clientbuffer]={data:'',connected:true};
+      newdevice=true;
+    }
+    else
+      connection.buffers[socket.clientbuffer].connected=true;
+    socket.write(connection.connectbuf+"\n");
+    if(connection.nick!=socket.irc.nick)
+      socket.write(":"+connection.nick_original+" NICK "+connection.nick+"\n");
+    if(!connection.connected) {
+      connection.write("AWAY\n");
+      connection.connected=true;
+    }
+    if(newdevice) {
+      connection.write("LUSERS\n");
+      socket.write(":*jbnc 375 "+connection.nick+" :- Message of the Day -\n");
+      socket.write(connection.motd+"\n");
+      socket.write(":*jbnc 376 "+connection.nick+" :End of /MOTD command.\n");
+    }
 
-  // Loop thru channels and send JOINs
-  for(key in connection.channels) {
-    if(connection.channels.hasOwnProperty(key)) {
-      _channel=connection.channels[key];
+    socket.write(":*jbnc PRIVMSG "+connection.nick+" :Attaching you to the network\n");
 
-      socket.write("@time=null;msgid=null :"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN :"+_channel.name+"\n");
-      _mode_params='';
+    // Loop thru channels and send JOINs
+    for(key in connection.channels) {
+      if(connection.channels.hasOwnProperty(key)) {
+        _channel=connection.channels[key];
+
+        socket.write("@time=2020-07-26T09:20:54.103Z;msgid=null :"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN :"+_channel.name+"\n");
+        _mode_params='';
     
         if ( typeof _channel.modes === 'undefined' )
           _channel.modes = "";
 
         if ( typeof _channel.topic === 'undefined' )
           _channel.topic = "";
-
-    
-      for(x=0;x<_channel.modes.length;x++) {
-        switch(_channel.modes[x]) {
-          case 'k': _mode_params+=' '+_channel.key;
-                    break;
-          case 'j': _mode_params+=' '+_channel.throttle;
-                    break;
-          case 'l': _mode_params+=' '+_channel.limit;
-                    break;
-          case 'f': _mode_params+=' '+_channel.forward;
-                    break;
-          default:
-                    break;
+          
+        for(x=0;x<_channel.modes.length;x++) {
+          switch(_channel.modes[x]) {
+            case 'k': _mode_params+=' '+_channel.key;
+              break;
+            case 'j': _mode_params+=' '+_channel.throttle;
+              break;
+            case 'l': _mode_params+=' '+_channel.limit;
+              break;
+            case 'f': _mode_params+=' '+_channel.forward;
+              break;
+            
+            default:
+              break;
+          }
         }
-      }
-      socket.write(":*jbnc 324 "+connection.nick+" "+key+" +"+_channel.modes+" "+_mode_params+"\n");
-      if(_channel.topic.length>0) {
-        socket.write(":*jbnc 332 "+connection.nick+" "+key+" :"+_channel.topic+"\n");
-        socket.write(":*jbnc 333 "+connection.nick+" "+key+" "+_channel.topic_set+" "+_channel.topic_time+"\n");
-      }
-      if(DEBUG) {
-        console.log(":*jbnc 324 "+connection.nick+" "+key+" +"+_channel.modes+" "+_mode_params);
+        socket.write(":*jbnc 324 "+connection.nick+" "+key+" +"+_channel.modes+" "+_mode_params+"\n");
         if(_channel.topic.length>0) {
-          console.log(":*jbnc 332 "+connection.nick+" "+key+" :"+_channel.topic);
-          console.log(":*jbnc 333 "+connection.nick+" "+key+" "+_channel.topic_set+" "+_channel.topic_time);
+          socket.write(":*jbnc 332 "+connection.nick+" "+key+" :"+_channel.topic+"\n");
+          socket.write(":*jbnc 333 "+connection.nick+" "+key+" "+_channel.topic_set+" "+_channel.topic_time+"\n");
         }
-      }
-
-      for(x=0;x<_channel.names.length;x++) {
-        if(x%53==0) {
-          socket.write("\n");
-          socket.write(":*jbnc 353 "+connection.nick+" = "+key+" :");
+        if(DEBUG) {
+          console.log(":*jbnc 324 "+connection.nick+" "+key+" +"+_channel.modes+" "+_mode_params);
+          if(_channel.topic.length>0) {
+            console.log(":*jbnc 332 "+connection.nick+" "+key+" :"+_channel.topic);
+            console.log(":*jbnc 333 "+connection.nick+" "+key+" "+_channel.topic_set+" "+_channel.topic_time);
+          }
+        }
+        
+        for(x=0;x<_channel.names.length;x++) {
+          if(x%53==0) {
+            socket.write("\n");
+            socket.write(":*jbnc 353 "+connection.nick+" = "+key+" :");
+            if(DEBUG)
+            console.log(":*jbnc 353 "+connection.nick+" = "+key+" :");
+          }
+          socket.write(_channel.names[x]);
           if(DEBUG)
-           console.log(":*jbnc 353 "+connection.nick+" = "+key+" :");
-        }
-        socket.write(_channel.names[x]);
-        if(DEBUG)
           console.log(_channel.names[x]);
-        if(x+1<_channel.names.length) {
-          socket.write(" ");
+          if(x+1<_channel.names.length) {
+            socket.write(" ");
+          }
         }
-      }
-      if(DEBUG)
+        if(DEBUG)
         console.log("\n:*jbnc 366 "+connection.nick+" "+key+" :End of /NAMES list.\n");
-      socket.write("\n:*jbnc 366 "+connection.nick+" "+key+" :End of /NAMES list.\n");
+        socket.write("\n:*jbnc 366 "+connection.nick+" "+key+" :End of /NAMES list.\n");
+      }
     }
-  }
-
-  socket.write(":"+connection.nick+" MODE "+connection.nick+" :+"+connection.umode+"\n");
-  if(DEBUG)
-    console.log(":"+connection.nick+" MODE "+connection.nick+" :+"+connection.umode)
-  if(connection.buffers[socket.clientbuffer] && connection.buffers[socket.clientbuffer].data && connection.buffers[socket.clientbuffer].data.length>0) {
-    socket.write(connection.buffers[socket.clientbuffer].data+"\n");
-    connection.buffers[socket.clientbuffer].data='';
+    
+    socket.write(":"+connection.nick+" MODE "+connection.nick+" :+"+connection.umode+"\n");
+    if(DEBUG)
+      console.log(":"+connection.nick+" MODE "+connection.nick+" :+"+connection.umode)
+    if(connection.buffers[socket.clientbuffer] && connection.buffers[socket.clientbuffer].data && connection.buffers[socket.clientbuffer].data.length>0) {
+      socket.write(connection.buffers[socket.clientbuffer].data+"\n");
+      connection.buffers[socket.clientbuffer].data='';
+    }
   }
 }
 
@@ -695,6 +720,8 @@ function clientConnect(socket) {
     }
     _success=false;
   }
+  if (socket.connected) 
+    _success=false;		   
   if(_success) {
     if(DEBUG)
       console.log("Starting connect");
@@ -712,6 +739,7 @@ function clientConnect(socket) {
     connection.nick = socket.irc.nick;
     connection.nick_original = socket.irc.nick;
     connection.password = socket.irc.password;
+    connection.nickpassword = socket.irc.nickpassword;													  
     connection.user = socket.irc.user;
     connection.ircuser = socket.irc.user;
     connection.server = socket.irc.server;
@@ -744,7 +772,11 @@ function clientConnect(socket) {
         } catch(e) {
           _reverse_ip = this.host;
         }
-        if(SERVER_WEBIRCHASHIP && !SERVER_WEBIRCPROXY) {
+        if(false) { // My server irc
+          _vhost = iphash(this.nick);
+          this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' galaxy-'+this.host+'.cloud-'+(_vhost?_vhost:'0')+'.jbnc '+this.host+' :secure\n');
+        }
+        else if(SERVER_WEBIRCHASHIP && !SERVER_WEBIRCPROXY) {
           this.write('WEBIRC '+SERVER_WEBIRC+' '+this.user+' jbnc.'+iphash(this.hostonce)+" "+this.host+"\n");
         }
         else if(SERVER_WEBIRCHASHIP && SERVER_WEBIRCPROXY) {
@@ -758,7 +790,7 @@ function clientConnect(socket) {
       }
       this.write('NICK '+this.nick+'\n');
       this.write('USER '+this.user+' * 0 :'+this.realname+'\n');
-      connections[hash(this.nick_original+this.user+this.password+this.server+this.port.toString())] = this;
+      connections[hash(this.nick_original+this.password+this.server+this.port.toString())] = this;
       if(DEBUG)
         console.log("Connection created.");
     });
@@ -792,13 +824,49 @@ function clientConnect(socket) {
               if(lines[n].trim().indexOf("message-tags")>=0) {
                 this.write("CAP REQ :message-tags\n");
               }
-              this.write("CAP END\n");
+              if(SASL && lines[n].trim().indexOf("sasl")>=0) {
+                this.write("CAP REQ :sasl\n");
+              }
+              if (!SASL)
+                this.write("CAP END\n");
+            }
+            else if(SASL && data[3] && data[3]=='ACK') {
+              if(lines[n].trim().indexOf("sasl")>=0) {
+                this.write("AUTHENTICATE :PLAIN\n");
+              }
             }
             else {
-              this.write("CAP END\n");
+              if (!SASL)
+                this.write("CAP END\n");
             }
             continue;
           }
+		  
+          if(SASL && data[0]=="AUTHENTICATE" && data[1]=="+") {
+            const auth_str = this.nick + '\0' +
+            this.nick + '\0' +
+            this.nickpassword;
+
+            const b = Buffer.from(auth_str, 'utf8');
+            let b64 = b.toString('base64');
+    
+            while (b64.length >= 400) {
+                this.write('AUTHENTICATE :' + b64.slice(0, 399) + '\n');
+                b64 = b64.slice(399);
+            }
+            if (b64.length > 0) {
+              this.write('AUTHENTICATE :' + b64 + '\n');
+            } else {
+              this.write('AUTHENTICATE :+\n');
+            }
+            continue;
+          }
+
+          if(SASL && data[1]=="903") {
+            this.write("CAP END\n");
+            continue;
+          }
+		  
           let s = (data[2]=="JOIN" || data[2]=="PART" || data[2]=="QUIT" || data[2]=="MODE" || data[2]=="PING" || data[2]=="NICK" || data[2]=="KICK" ? data[2] : data[1]);
           switch(s) {
             case '001':
@@ -1141,6 +1209,8 @@ function clientConnect(socket) {
                 this.channels[_channel].names.push(_names[x].trim().split("!")[0]);
                 if(typeof this.channels[_channel].userhosts !== 'undefined' && _names[x].trim().indexOf("!")>=0)
                   this.channels[_channel].userhosts.push(_names[x].trim().split("!")[1]);
+                  /*else
+					  this.channels[_channel].userhosts.push("*@*");	*/						
               }
               break;
             case '366':
@@ -1177,12 +1247,12 @@ function clientConnect(socket) {
               }
               break;
           }
-          if(data[0] == "PING") {
-            this.write("PONG "+data[1].substr(1).trim()+"\n");
+		  if(data[1] == "PING") {
+            this.write("PONG "+data[2].substr(1).trim()+"\n");
             continue;
           }
-          if(data[1] == "PING") {
-            this.write("PONG "+data[2].substr(1).trim()+"\n");
+          if(data[0] == "PING") {
+            this.write("PONG "+data[1].substr(1).trim()+"\n");
             continue;
           }
           if(lines[n].length>1) {
@@ -1196,6 +1266,17 @@ function clientConnect(socket) {
               if(this.buffers.hasOwnProperty(key)) {
                 if(!this.buffers[key].connected) {
                   this.buffers[key].data+=lines[n]+"\n";
+				  
+                  // Temporary: replace this system with "PRIVMSG_LINEMAX" ...
+                  _split = this.buffers[key].data.split("\n");
+                  if(_split.length>=BUFFER_LINEMAX && BUFFER_LINEMAX!=0) {
+                    _split.splice(0, _split.length-BUFFER_LINEMAX);
+                    _line = "";
+                    for (t=0; t<_split.length; t++) {
+                      _line += _split[t]+"\n";
+                    }
+                    this.buffers[key].data=_line;
+                  }
                 }
               }
             }
@@ -1210,7 +1291,7 @@ function clientConnect(socket) {
         this.parents[x].end();
       }
       this.buffers=false;
-      delete connections[hash(this.nick+this.user+this.password+this.server+this.port.toString())];
+	  delete connections[hash(this.nick+this.password+this.server+this.port.toString())];
       this.destroy();
     });
     connection.on('error', function(err) {
