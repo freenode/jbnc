@@ -805,7 +805,7 @@ function clientConnect(socket) {
       }
       
       if (true) {
-        for(let n=0;n<lines.length;n++) {
+        for(n=0;n<lines.length;n++) {
           if(DEBUG)
             console.log("> "+lines[n]);
           data = lines[n].trim().split(" ");
@@ -1207,10 +1207,14 @@ function clientConnect(socket) {
               }
               for(x=0;x<_names.length;x++) {
                 this.channels[_channel].names.push(_names[x].trim().split("!")[0]);
-                if(typeof this.channels[_channel].userhosts !== 'undefined' && _names[x].trim().indexOf("!")>=0)
+
+                if (typeof this.channels[_channel].userhosts === 'undefined')
+                  this.channels[_channel].userhosts=[];
+
+                if(_names[x].trim().indexOf("!")>=0)
                   this.channels[_channel].userhosts.push(_names[x].trim().split("!")[1]);
-                  /*else
-					  this.channels[_channel].userhosts.push("*@*");	*/						
+                /*else
+                  this.channels[_channel].userhosts.push("*@*");	*/						
               }
               break;
             case '366':
