@@ -862,9 +862,18 @@ function clientConnect(socket) {
             continue;
           }
 
-          if(SASL && data[1]=="903") {
-            this.write("CAP END\n");
-            continue;
+          // :irc.server 904 <nick> :SASL authentication failed
+          if(data[1]=="904") {
+            if(!this.authenticated) {
+              this.end();
+            }
+          }
+
+          // :x 903 y :SASL authentication successful
+          if(data[1]=="903") {
+            if(!this.authenticated) {
+              this.write("CAP END\n");
+            }
           }
 		  
           let s = (data[2]=="JOIN" || data[2]=="PART" || data[2]=="QUIT" || data[2]=="MODE" || data[2]=="PING" || data[2]=="NICK" || data[2]=="KICK" ? data[2] : data[1]);
@@ -1251,7 +1260,7 @@ function clientConnect(socket) {
               }
               break;
           }
-		  if(data[1] == "PING") {
+          if(data[1] == "PING") {
             this.write("PONG "+data[2].substr(1).trim()+"\n");
             continue;
           }
@@ -1295,7 +1304,7 @@ function clientConnect(socket) {
         this.parents[x].end();
       }
       this.buffers=false;
-	  delete connections[hash(this.nick+this.password+this.server+this.port.toString())];
+      delete connections[hash(this.nick+this.password+this.server+this.port.toString())];
       this.destroy();
     });
     connection.on('error', function(err) {
