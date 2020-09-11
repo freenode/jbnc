@@ -760,6 +760,7 @@ function clientConnect(socket) {
     connection.connected = true;
     connection.opmode = BOUNCER_DEFAULT_OPMODE;
     connection.userhostInNames=false;
+    connection.messagetags=false;
 
     // Temp Buffer
     connection._buffer='';
@@ -823,11 +824,12 @@ function clientConnect(socket) {
                 this.write("CAP REQ :userhost-in-names\n");
                 this.userhostInNames=true;
               }
-              if(lines[n].trim().indexOf("server-time")>=0) {
-                this.write("CAP REQ :server-time\n");
-              }
               if(lines[n].trim().indexOf("message-tags")>=0) {
                 this.write("CAP REQ :message-tags\n");
+                this.messagetags=true;
+              }
+              if(this.messagetags && lines[n].trim().indexOf("server-time")>=0) {
+                this.write("CAP REQ :server-time\n");
               }
               if(SASL && lines[n].trim().indexOf("sasl")>=0) {
                 this.write("CAP REQ :sasl\n");
@@ -881,7 +883,12 @@ function clientConnect(socket) {
             }
           }
 		  
-          let s = (data[2]=="JOIN" || data[2]=="PART" || data[2]=="QUIT" || data[2]=="MODE" || data[2]=="PING" || data[2]=="NICK" || data[2]=="KICK" ? data[2] : data[1]);
+          let s = data[1];
+
+          if ( this.messagetags && (data[2]=="JOIN" || data[2]=="PART" || data[2]=="QUIT" || data[2]=="MODE" || data[2]=="PING" || data[2]=="NICK" || data[2]=="KICK") ) {
+            s = data[2];
+          }
+
           switch(s) {
             case '001':
               if(!this.authenticated) {
@@ -902,20 +909,29 @@ function clientConnect(socket) {
               break;
             case '324':
             case 'MODE':
+              _mode_target=[];
               if (data[1]=='324') {
                 _target=data[3].trim();
-                _sender=data[1].substr(1).split("!")[0];
+                _sender=data[0].substr(1).split("!")[0];
                 _mode=data[4].trim();
                 if(data[5])
                 _mode_target = data.slice(5,data.length);
               }
-              else if (data[2]=='MODE') {
+              else if (this.messagetags && data[2]=='MODE') {
                 _target=data[3].trim();
                 _sender=data[1].substr(1).split("!")[0];
                 _mode=data[4].trim();
                 if(data[5])
                 _mode_target = data.slice(5,data.length);
-              } else {
+              } 
+              else if (!this.messagetags) {
+                _target=data[2].trim();
+                _sender=data[0].substr(1).split("!")[0];
+                _mode=data[3].trim();
+                if(data[4])
+                _mode_target = data.slice(4,data.length);
+              } 
+              else {
                 _target=data[2].trim();
                 _sender=data[2];
                 _mode=data[3].trim();
@@ -1091,16 +1107,17 @@ function clientConnect(socket) {
               this.motd+=lines[n]+"\n";
               break;
             case 'JOIN':
-              _temp = data[1].substr(1).split("!");
+              _temp = (this.messagetags ? data[1].substr(1).split("!") : data[0].substr(1).split("!"));
+              _datatemp = (this.messagetags ? 3 : 2);
               _nick = _temp[0];
               if(_temp[1])
                 _userhost = _temp[1];
               if(_temp[1] && this.nick==_nick) {
                 this.ircuser=_temp[1].split("@")[0];
               }
-              _channels = data[3].substr(0).trim().split(",");
-              if(data[3].indexOf(":")!=-1)
-                _channels = data[3].substr(1).trim().split(",");
+              _channels = data[_datatemp].substr(0).trim().split(",");
+              if(data[_datatemp].indexOf(":")!=-1)
+                _channels = data[_datatemp].substr(1).trim().split(",");
               for(x=0;x<_channels.length;x++) {
                 _channel=_channels[x];
                 __channel=_channel.toUpperCase();
@@ -1169,8 +1186,8 @@ function clientConnect(socket) {
               this.channels[_channel].topic_time=_time;
               break;
             case 'KICK':
-              _target=data[4].trim();
-              _channel=data[3].toUpperCase().trim();
+              _target=(this.messagetags ? data[4].trim() : data[3].trim());
+              _channel=(this.messagetags ? data[3].toUpperCase().trim() : data[2].toUpperCase().trim());
               if(_target==this.nick) {
                 delete this.channels[_channel];
               }
@@ -1182,8 +1199,8 @@ function clientConnect(socket) {
               }
               break;
             case 'PART':
-              _target=data[3].toUpperCase().trim();
-              _sender=data[1].substr(1).split("!")[0];
+              _target=(this.messagetags ? data[3].toUpperCase().trim() : data[2].toUpperCase().trim());
+              _sender=(this.messagetags ? data[1].substr(1).split("!")[0] : data[0].substr(1).split("!")[0]);
               if(_sender==this.nick) {
                 delete this.channels[_target];
               }
@@ -1196,7 +1213,7 @@ function clientConnect(socket) {
               }
               break;
             case 'QUIT':
-              _sender=data[1].substr(1).split("!")[0];
+              _sender=(this.messagetags ? data[1].substr(1).split("!")[0] : data[0].substr(1).split("!")[0]);
               for (key in this.channels) {
                 if (this.channels.hasOwnProperty(key)) {
                   for(x=0;x<this.channels[key].names.length;x++) {
