@@ -52,6 +52,11 @@ process.on('SIGHUP',function() {
   BOUNCER_ADMIN=config.bouncerAdmin?config.bouncerAdmin:'';
 });
 
+// Prevent BNC from crashing for all other users when an error is caused by a user (with log error)
+process.on('uncaughtException', (err, origin) => {
+   console.error(`# Serious problem (${origin}) - this should not happen but the JBNC is still running. ${err.stack}`);
+});
+
 
 // Track IRC (Server) Connections
 var connections={};
