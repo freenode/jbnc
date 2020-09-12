@@ -703,9 +703,13 @@ function clientReconnect(socket) {
     if(DEBUG)
       console.log(":"+connection.nick+" MODE "+connection.nick+" :+"+connection.umode)
     if(connection.buffers[socket.clientbuffer] && connection.buffers[socket.clientbuffer].data && connection.buffers[socket.clientbuffer].data.length>0) {
+      socket.write(":*jbnc PRIVMSG "+connection.nick+" :Retrieving all messages\n");
       socket.write(connection.buffers[socket.clientbuffer].data+"\n");
       connection.buffers[socket.clientbuffer].data='';
+      socket.write(":*jbnc PRIVMSG "+connection.nick+" :End of retrieving all messages\n");
     }
+    else
+    socket.write(":*jbnc PRIVMSG "+connection.nick+" :There is no new message\n");
   }
 }
 
