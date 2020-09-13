@@ -54,7 +54,6 @@ bouncerShack: ping ack timeout
 bouncerDefaultOpmode: auto op/voice/hop mode default (can be turned on per client using /jbnc)
 bouncerTimeout: how long until after no clients connected will the user stay connected
 bufferMaxSize: maximum # of bytes a client buffer can hold before its terminated or 0 for unlimited
-sasl: true or false if use sasl
 ```
 
 3. Run
