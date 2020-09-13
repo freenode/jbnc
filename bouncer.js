@@ -29,8 +29,7 @@ var BOUNCER_DEFAULT_OPMODE = config.bouncerDefaultOpmode?config.bouncerDefaultOp
 const BOUNCER_MODE = config.mode?config.mode:'bouncer';
 const BOUNCER_TIMEOUT = config.bouncerTimeout?config.bouncerTimeout:0;
 const BUFFER_MAXSIZE = config.bufferMaxSize?config.bufferMaxSize:52428800;
-const BUFFER_LINEMAX = config.lineMax?config.lineMax:1500;
-const SASL = config.sasl?config.sasl:false;													
+const BUFFER_LINEMAX = config.lineMax?config.lineMax:1500;									
 const BOUNCER_SHACK = config.bouncerShack?config.bouncerShack:10;
 const SERVER_WEBIRC = config.webircPassword?config.webircPassword:'';
 const SERVER_WEBIRCHASHIP = config.webircHashIp?true:false;
@@ -835,25 +834,26 @@ function clientConnect(socket) {
               if(this.messagetags && lines[n].trim().indexOf("server-time")>=0) {
                 this.write("CAP REQ :server-time\n");
               }
-              if(SASL && lines[n].trim().indexOf("sasl")>=0) {
+              if(lines[n].trim().indexOf("sasl")>=0) {
                 this.write("CAP REQ :sasl\n");
+                this.sasl=true;
               }
-              if (!SASL)
+              if (!this.sasl)
                 this.write("CAP END\n");
             }
-            else if(SASL && data[3] && data[3]=='ACK') {
+            else if(this.sasl && data[3] && data[3]=='ACK') {
               if(lines[n].trim().indexOf("sasl")>=0) {
                 this.write("AUTHENTICATE :PLAIN\n");
               }
             }
             else {
-              if (!SASL)
+              if (!this.sasl)
                 this.write("CAP END\n");
             }
             continue;
           }
 		  
-          if(SASL && data[0]=="AUTHENTICATE" && data[1]=="+") {
+          if(this.sasl && data[0]=="AUTHENTICATE" && data[1]=="+") {
             const auth_str = this.nick + '\0' +
             this.nick + '\0' +
             this.nickpassword;
