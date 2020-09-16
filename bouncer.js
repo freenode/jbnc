@@ -914,6 +914,7 @@ function clientConnect(socket) {
             case '324':
             case 'MODE':
               _mode_target=[];
+              // <- :irc.jbnc.com 324 spawn #lu +CPTVnrst
               if (data[1]=='324') {
                 _target=data[3].trim();
                 _sender=data[0].substr(1).split("!")[0];
@@ -921,23 +922,25 @@ function clientConnect(socket) {
                 if(data[5])
                 _mode_target = data.slice(5,data.length);
               }
+              // <- @time=2020-09-16T22:25:40.594Z :spawn!spawn@chanroot/b3Az MODE #lu +m
               else if (this.messagetags && data[2]=='MODE') {
                 _target=data[3].trim();
                 _sender=data[1].substr(1).split("!")[0];
                 _mode=data[4].trim();
                 if(data[5])
                 _mode_target = data.slice(5,data.length);
-              } 
-              else if (!this.messagetags) {
+              }
+              // :spawn!spawn@chanroot/b3Az MODE #lu +m
+              else if (!this.messagetags && data[1]=='MODE') {
                 _target=data[2].trim();
                 _sender=data[0].substr(1).split("!")[0];
                 _mode=data[3].trim();
                 if(data[4])
                 _mode_target = data.slice(4,data.length);
-              } 
+              }
               else {
                 _target=data[2].trim();
-                _sender=data[2];
+                _sender=data[0].substr(1).split("!")[0];
                 _mode=data[3].trim();
                 if(data[4])
                 _mode_target = data.slice(4,data.length);
