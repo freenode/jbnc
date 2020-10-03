@@ -51,9 +51,9 @@ process.on('SIGHUP',function() {
   BOUNCER_ADMIN=config.bouncerAdmin?config.bouncerAdmin:'';
 });
 
-// Prevent BNC from crashing for all other users when an error is caused by a user (with log error)
+// Prevent BNC from crashing for all other users when an error is caused by a user (with log error and time)
 process.on('uncaughtException', (err, origin) => {
-   console.error(`# Serious problem (${origin}) - this should not happen but the JBNC is still running. ${err.stack}`);
+  console.error(`${parseInt(Number(new Date()) / 1000)} # Serious problem (${origin}) - this should not happen but the JBNC is still running. ${err.stack}`);
 });
 
 
@@ -308,7 +308,7 @@ server = doServer(tlsOptions,function(socket) {
                 if(this.lastping == command[1]) {
                   this.lastping='';
                 }
-                else {
+                else if(this.hash && connections[this.hash]) {
                   connections[this.hash].write("PONG "+command[1]+"\n");
                 }
               }
