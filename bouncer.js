@@ -29,7 +29,7 @@ var BOUNCER_DEFAULT_OPMODE = config.bouncerDefaultOpmode?config.bouncerDefaultOp
 const BOUNCER_MODE = config.mode?config.mode:'bouncer';
 const BOUNCER_TIMEOUT = config.bouncerTimeout?config.bouncerTimeout:0;
 const BUFFER_MAXSIZE = config.bufferMaxSize?config.bufferMaxSize:52428800;
-const BUFFER_LINEMAX = config.lineMax?config.lineMax:1500;									
+const BUFFER_LINEMAX = config.lineMax?config.lineMax:1500;
 const BOUNCER_SHACK = config.bouncerShack?config.bouncerShack:10;
 const SERVER_WEBIRC = config.webircPassword?config.webircPassword:'';
 const SERVER_WEBIRCHASHIP = config.webircHashIp?true:false;
@@ -979,7 +979,7 @@ function clientConnect(socket) {
                                 _this_target = _mode_target[_mode_count] + "!" + (curchan.userhosts[c]?curchan.userhosts[c]:"*@*");
                                 if(curchan.names[c].indexOf("@")==-1) {
                                   curchan.names[c]="@"+curchan.names[c];
-                                  if(_mode_target[_mode_count]!=this.nick && curchan.aop.indexOf(_this_target)<0 && this.opmode) {
+                                  if(_mode_target[_mode_count]!=this.nick && curchan.aop && curchan.aop.indexOf(_this_target)<0 && this.opmode) {
                                     curchan.aop.push(_this_target);
                                   }
                                 }
@@ -1004,7 +1004,7 @@ function clientConnect(socket) {
                                       curchan.names[c]=curchan.names[c].substr(0,2)+"+"+curchan.names[c].substr(2);
                                     }
                                   }
-                                  if(_mode_target[_mode_count]!=this.nick && curchan.aov.indexOf(_this_target)<0 && this.opmode) {
+                                  if(_mode_target[_mode_count]!=this.nick && curchan.aov && curchan.aov.indexOf(_this_target)<0 && this.opmode) {
                                     curchan.aov.push(_mode_target[_this_target]);
                                   }
                                 }
