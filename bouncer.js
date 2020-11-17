@@ -1018,7 +1018,7 @@ function clientConnect(socket) {
                                   }
                                   else
                                     curchan.names[c]=curchan.names[c].substr(0,1)+"%"+curchan.names[c].substr(1);
-                                  if(_mode_target[_mode_count]!=this.nick && curchan.aoh.indexOf(_this_target)<0 && this.opmode) {
+                                  if(_mode_target[_mode_count]!=this.nick && curchan.aoh && curchan.aoh.indexOf(_this_target)<0 && this.opmode) {
                                     curchan.aoh.push(_mode_target[_this_target]);
                                   }
                                 }
@@ -1062,7 +1062,7 @@ function clientConnect(socket) {
                               case 'o':
                                 _this_target = _mode_target[_mode_count] + "!" + (curchan.userhosts[c]?curchan.userhosts[c]:"*@*");
                                 curchan.names[c]=curchan.names[c].replace("@","");
-                                if(_mode_target[_mode_count]!=this.nick && curchan.aop.indexOf(_this_target)>=0 && this.opmode) {
+                                if(_mode_target[_mode_count]!=this.nick && curchan.aop && curchan.aop.indexOf(_this_target)>=0 && this.opmode) {
                                   curchan.aop.splice(curchan.aop.indexOf(_this_target),1);
                                 }
                                 if(_mode_target[_mode_count]==this.nick) this.isop=false;
@@ -1070,7 +1070,7 @@ function clientConnect(socket) {
                               case 'v':
                                 _this_target = _mode_target[_mode_count] + "!" + (curchan.userhosts[c]?curchan.userhosts[c]:"*@*");
                                 curchan.names[c]=curchan.names[c].replace("+","");
-                                if(_mode_target[_mode_count]!=this.nick && curchan.aov.indexOf(_this_target)>=0 && this.opmode) {
+                                if(_mode_target[_mode_count]!=this.nick && curchan.aov && curchan.aov.indexOf(_this_target)>=0 && this.opmode) {
                                   curchan.aov.splice(curchan.aov.indexOf(_this_target),1);
                                 }
                                 if(_mode_target[_mode_count]==this.nick) this.isvoice=false;
@@ -1078,7 +1078,7 @@ function clientConnect(socket) {
                               case 'h':
                                 _this_target = _mode_target[_mode_count] + "!" + (curchan.userhosts[c]?curchan.userhosts[c]:"*@*");
                                 curchan.names[c]=curchan.names[c].replace("%","");
-                                if(_mode_target[_mode_count]!=this.nick && curchan.aoh.indexOf(_this_target)>=0 && this.opmode) {
+                                if(_mode_target[_mode_count]!=this.nick && curchan.aoh && curchan.aoh.indexOf(_this_target)>=0 && this.opmode) {
                                   curchan.aoh.splice(curchan.aoh.indexOf(_this_target),1);
                                 }
                                 if(_mode_target[_mode_count]==this.nick) this.ishop=false;
