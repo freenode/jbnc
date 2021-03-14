@@ -515,7 +515,7 @@ server = doServer(tlsOptions,function(socket) {
                   passwords=command[2].split(",");
                 l=0;
                 for(m=0;m<channels.length;m++) {
-                  if(typeof connections[this.hash].channels !== 'undefined' && connections[this.hash].channels[channels[m].trim().toUpperCase()]) {
+                  if(typeof connections[this.hash].channels !== 'undefined' && connections[this.hash].channels[channels[m].trim().toLowerCase()]) {
                     if(command[2] && l<passwords.length)
                       l++;
                     continue;
@@ -952,7 +952,7 @@ function clientConnect(socket) {
               _add = true;
               // walk thru modes
               for(i=0;i<_mode.length;i++) {
-                let curchan=this.channels[_target.toUpperCase()];
+                let curchan=this.channels[_target.toLowerCase()];
                 if(_mode[i]=='+')
                   _add=true;
                 else if(_mode[i]=='-')
@@ -1127,7 +1127,7 @@ function clientConnect(socket) {
                 _channels = data[_datatemp].substr(1).trim().split(",");
               for(x=0;x<_channels.length;x++) {
                 _channel=_channels[x];
-                __channel=_channel.toUpperCase();
+                __channel=_channel.toLowerCase();
                 if(_nick==this.nick) {
                   if(!this.channels[__channel]) {
                     this.channels[__channel]={};
@@ -1168,7 +1168,7 @@ function clientConnect(socket) {
               }
               break;
             case 'TOPIC':
-              _target=data[2].toUpperCase().trim();
+              _target=data[2].toLowerCase().trim();
               _topic=lines[n].substr(lines[n].substr(1).indexOf(":")+2).trim();
               if(this.channels[_target]) {
                 this.channels[_target].topic=_topic;
@@ -1177,14 +1177,14 @@ function clientConnect(socket) {
               }
               break;
             case '332':
-              _target=data[3].toUpperCase().trim();
+              _target=data[3].toLowerCase().trim();
               _topic=lines[n].substr(lines[n].substr(1).indexOf(":")+2).trim();
               if(!this.channels[_target])
                 this.channels[_target]={};
               this.channels[_target].topic=_topic;
               break;
             case '333':
-              _channel=data[3].toUpperCase().trim();
+              _channel=data[3].toLowerCase().trim();
               _setter=data[4].split("!")[0].trim();
               _time=data[5].trim();
               if(!this.channels[_channel])
@@ -1194,7 +1194,7 @@ function clientConnect(socket) {
               break;
             case 'KICK':
               _target=(this.messagetags ? data[4].trim() : data[3].trim());
-              _channel=(this.messagetags ? data[3].toUpperCase().trim() : data[2].toUpperCase().trim());
+              _channel=(this.messagetags ? data[3].toLowerCase().trim() : data[2].toLowerCase().trim());
               if(_target==this.nick) {
                 delete this.channels[_channel];
               }
@@ -1206,7 +1206,7 @@ function clientConnect(socket) {
               }
               break;
             case 'PART':
-              _target=(this.messagetags ? data[3].toUpperCase().trim() : data[2].toUpperCase().trim());
+              _target=(this.messagetags ? data[3].toLowerCase().trim() : data[2].toLowerCase().trim());
               _sender=(this.messagetags ? data[1].substr(1).split("!")[0] : data[0].substr(1).split("!")[0]);
               if(_sender==this.nick) {
                 delete this.channels[_target];
@@ -1234,7 +1234,7 @@ function clientConnect(socket) {
               }
               break;
             case '353':
-              _channel=data[4].toUpperCase().trim();
+              _channel=data[4].toLowerCase().trim();
               _names=lines[n].substr(1).split(" :")[1].trim().split(" ");
               if(!this._getnames[_channel]) {
                 this._getnames[_channel]=true;
@@ -1256,7 +1256,7 @@ function clientConnect(socket) {
               }
               break;
             case '366':
-              _channel=data[3].toUpperCase().trim();
+              _channel=data[3].toLowerCase().trim();
               this._getnames[_channel]=false;
               break;
             case 'NICK':
