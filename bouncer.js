@@ -959,7 +959,7 @@ function clientConnect(socket) {
                   _add=false;
                 else {
                   if(_add) {
-                    if(_sender==_target && _target==this.nick) {
+                    if(_sender==_target && _target==this.nick || _sender=="NickServ" && _target==this.nick || _sender=="OperServ" && _target==this.nick) {
                       if(this.umode!=null && this.umode.indexOf(_mode[i])==-1) {
                         this.umode+=_mode[i];
                       }
@@ -1048,7 +1048,7 @@ function clientConnect(socket) {
                   }
                   else {
                     _regex = new RegExp(_mode[i],"g")
-                    if(_sender==_target && _target==this.nick)
+                    if(_sender==_target && _target==this.nick || _sender=="NickServ" && _target==this.nick || _sender=="OperServ" && _target==this.nick)
                       this.umode=this.umode.replace(_regex,"");
                     else if(curchan != null && (_mode[i]!='o' && _mode[i]!='v' && _mode[i]!='h'))
                       curchan.modes=curchan.modes.replace(_regex,"");
