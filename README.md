@@ -96,6 +96,11 @@ Here is an example for a desktop connecting to an irc server that is password pr
 dragon||AJFiej2fn2345/irc.dal.net:6667||somepassword/desktop
 ```
 
+Optional: you can put the account at the end for SASL identification, ideal if the account is not the nick used:
+```
+dragon||AJFiej2fn2345/irc.dal.net:6667/mobile/ArMyN
+```
+
 #### SSL Client
 Use "+port" to do SSL.  For example:
 ```
