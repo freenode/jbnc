@@ -191,6 +191,7 @@ server = doServer(tlsOptions,function(socket) {
                   this.irc.realname=null;
                   this.irc.serverpassword=null;
                   this.irc.nickpassword=null;
+                  this.irc.accountsasl=null;
                   origin = commands[1].trim().split("/");
                   if(origin[0].indexOf("||")>0)
                     this.irc.password = origin[0].split("||")[1];
@@ -213,7 +214,7 @@ server = doServer(tlsOptions,function(socket) {
                     }
                   }
                   else {
-                    if(origin.length!=2 && origin.length!=3)
+                    if(origin.length!=2 && origin.length!=3 && origin.length!=4)
                       this.end();
                     else {
                       _server_pass = origin[1].split("||");
@@ -228,6 +229,8 @@ server = doServer(tlsOptions,function(socket) {
                       }							
                       if(origin[2])
                         this.clientbuffer=origin[2].trim();
+                      if(origin[3])
+                        this.irc.accountsasl=origin[3].trim();
                     }
                   }
                 }
@@ -747,7 +750,8 @@ function clientConnect(socket) {
     connection.nick = socket.irc.nick;
     connection.nick_original = socket.irc.nick;
     connection.password = socket.irc.password;
-    connection.nickpassword = socket.irc.nickpassword;													  
+    connection.nickpassword = socket.irc.nickpassword;
+    connection.accountsasl = socket.irc.accountsasl;													  
     connection.user = socket.irc.user;
     connection.ircuser = socket.irc.user;
     connection.server = socket.irc.server;
@@ -854,8 +858,8 @@ function clientConnect(socket) {
           }
 		  
           if(this.sasl && data[0]=="AUTHENTICATE" && data[1]=="+") {
-            const auth_str = this.nick + '\0' +
-            this.nick + '\0' +
+            const auth_str = (this.accountsasl ? this.accountsasl : this.nick) + '\0' +
+            (this.accountsasl ? this.accountsasl : this.nick) + '\0' +
             this.nickpassword;
 
             const b = Buffer.from(auth_str, 'utf8');
