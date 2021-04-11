@@ -221,8 +221,8 @@ server = doServer(tlsOptions,function(socket) {
                       _server = _server_pass[0].split(":");
                       this.irc.server = _server[0];
                       this.irc.port = (_server[1] ? _server[1].trim() : 6667);
-                      if(origin[0].split("||")[0]) {
-                        this.irc.serverpassword=origin[0].split("||")[0];
+                      if(origin[1].split("||")[1]) {
+                        this.irc.serverpassword=origin[1].split("||")[1];
                       }
                       if(origin[0].split("||")[1]) {
                         this.irc.nickpassword=origin[0].split("||")[1];
