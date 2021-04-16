@@ -1,4 +1,4 @@
-// jbnc v0.5
+// jbnc v0.6
 // Copyright (C) 2020 Andrew Lee <andrew@imperialfamily.com>
 // All Rights Reserved.
 const tls = require('tls');
@@ -644,7 +644,7 @@ function clientReconnect(socket) {
       if(connection.channels.hasOwnProperty(key)) {
         _channel=connection.channels[key];
 
-        socket.write("@time=2020-07-26T09:20:54.103Z;msgid=null :"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN :"+_channel.name+"\n");
+        socket.write("@time="+new Date().toISOString()+";msgid=back :"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN :"+_channel.name+"\n");
         _mode_params='';
     
         if ( typeof _channel.modes === 'undefined' )
@@ -1051,7 +1051,7 @@ function clientConnect(socket) {
                     }
                   }
                   else {
-                    _regex = new RegExp(_mode[i],"g")
+                    _regex = new RegExp(_mode[i],"g");
                     if(_sender==_target && _target==this.nick || _sender=="NickServ" && _target==this.nick || _sender=="OperServ" && _target==this.nick)
                       this.umode=this.umode.replace(_regex,"");
                     else if(curchan != null && (_mode[i]!='o' && _mode[i]!='v' && _mode[i]!='h'))
