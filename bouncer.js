@@ -719,12 +719,26 @@ function clientConnect(socket) {
   let _success=true;
   let _connector=net.createConnection;
   let _tempport=socket.irc.port.toString();
+  let _ssl=false;
+  let _options = {
+    rejectUnauthorized: true
+  };
   if(_tempport.substr(0,1)=="+") {
     _connector=tls.connect;
     _tempport=parseInt(socket.irc.port.toString().substr(1));
+    _ssl=true;
+  }
+  else if(_tempport.substr(0,1)=="=") {
+    _connector=tls.connect;
+    _tempport=parseInt(socket.irc.port.toString().substr(1));
+    _ssl=true;
+    _options = { rejectUnauthorized: false };
   }
   try {
-    connection = _connector(_tempport, socket.irc.server);
+    if(_ssl)
+      connection = _connector(_tempport, socket.irc.server, _options);
+    else
+      connection = _connector(_tempport, socket.irc.server);
   } catch(e) {
     if(DEBUG) {
       console.log("Failed to connect to "+socket.irc.server+ ":"+__tempport);

@@ -14,6 +14,7 @@ There are many users and networks who are stably using it today!
 - No registration or account required
 - Separate buffers for clients
 - SSL
+- SASL
 - Works with any RFC 1459 Compatible Client
 - Password can be changed in the config and a HUP will reload the passwords.
 - ***Gateway Mode for IRC Servers and Networks (See Below)***
@@ -101,10 +102,17 @@ Optional: you can put the account at the end for SASL identification, ideal if t
 dragon||AJFiej2fn2345/irc.dal.net:6667/mobile/ArMyN
 ```
 
+Your connection password gets used to attempt SASL identification.
+
 #### SSL Client
 Use "+port" to do SSL.  For example:
 ```
 dragon||Ajdfklsjfa/irc.dal.net:+6697/mobile
+```
+
+You can also use "=port" to do SSL with a self-signed cert.
+```
+dragon||Ajdfklsjfa/irc.dal.net:=6697/mobile
 ```
 
 #### Whilst Connected
