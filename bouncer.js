@@ -1,4 +1,4 @@
-// jbnc v0.5
+// jbnc v0.6
 // Copyright (C) 2020 Andrew Lee <andrew@imperialfamily.com>
 // All Rights Reserved.
 const tls = require('tls');
@@ -39,6 +39,7 @@ const SERVER_TLS_CERT = config.tlsCert?config.tlsCert:'fullchain.pem';
 const SERVER_PORT = BOUNCER_MODE=='gateway'?(config.serverPort?config.serverPort:0):0;
 const INGRESSWEBIRC = config.ingresswebircPassword?config.ingresswebircPassword:'';
 const SERVER = BOUNCER_MODE=='gateway'?(config.server?config.server:''):'';
+const MSG_REDISTRIBUTION = config.MsgRedistribution?true:false;
 const DEBUG = config.debug?config.debug:false;
 
 
@@ -422,6 +423,13 @@ server = doServer(tlsOptions,function(socket) {
                       this.write(":*jbnc NOTICE * :"+connections[this.hash].parents[x].clientbuffer+" ("+connections[this.hash].parents[x].remoteAddress+")\n");
                     }
                     break;
+                  case 'LOGCLEAR':
+                    for(key in connections[this.hash].buffers) {
+                      if(connections[this.hash].buffers[key] && connections[this.hash].buffers[key].privmsgnotice && connections[this.hash].buffers[key].privmsgnotice.length>0) {
+                        connections[this.hash].buffers[key].privmsgnotice.length=0;
+                      }
+                    }
+                  break;
                   case 'BUFFERS':
                    totalbuffers = 0;
                     for(key in connections[this.hash].buffers) {
@@ -644,7 +652,7 @@ function clientReconnect(socket) {
       if(connection.channels.hasOwnProperty(key)) {
         _channel=connection.channels[key];
 
-        socket.write("@time=2020-07-26T09:20:54.103Z;msgid=null :"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN :"+_channel.name+"\n");
+        socket.write("@time="+new Date().toISOString()+";msgid=back :"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN :"+_channel.name+"\n");
         _mode_params='';
     
         if ( typeof _channel.modes === 'undefined' )
@@ -703,8 +711,16 @@ function clientReconnect(socket) {
     
     socket.write(":"+connection.nick+" MODE "+connection.nick+" :+"+connection.umode+"\n");
     if(DEBUG)
-      console.log(":"+connection.nick+" MODE "+connection.nick+" :+"+connection.umode)
-    if(connection.buffers[socket.clientbuffer] && connection.buffers[socket.clientbuffer].data && connection.buffers[socket.clientbuffer].data.length>0) {
+      console.log(":"+connection.nick+" MODE "+connection.nick+" :+"+connection.umode);
+
+    if (MSG_REDISTRIBUTION && connection.messagetags && connection.buffers[socket.clientbuffer] && connection.buffers[socket.clientbuffer].privmsgnotice && connection.buffers[socket.clientbuffer].privmsgnotice.length>0) {
+      socket.write(":*jbnc PRIVMSG "+connection.nick+" :Retrieving all privmsgs/notices\n");
+      for(x=0; x<connection.buffers[socket.clientbuffer].privmsgnotice.length; x++) {
+        socket.write(connection.buffers[socket.clientbuffer].privmsgnotice[x].line);
+      }
+      socket.write(":*jbnc PRIVMSG "+connection.nick+" :End of retrieving all privmsgs/notices\n"); 
+    }
+    else if(connection.buffers[socket.clientbuffer] && connection.buffers[socket.clientbuffer].data && connection.buffers[socket.clientbuffer].data.length>0) {
       socket.write(":*jbnc PRIVMSG "+connection.nick+" :Retrieving all messages\n");
       socket.write(connection.buffers[socket.clientbuffer].data+"\n");
       connection.buffers[socket.clientbuffer].data='';
@@ -756,7 +772,7 @@ function clientConnect(socket) {
 
     // client buffers
     connection.buffers = {};
-    connection.buffers[socket.clientbuffer] = {data:'',connected:true};
+    connection.buffers[socket.clientbuffer] = {data:'',connected:true,privmsgnotice:[]};
     socket.connected=true;
 
     // irc server connection data
@@ -765,7 +781,8 @@ function clientConnect(socket) {
     connection.nick_original = socket.irc.nick;
     connection.password = socket.irc.password;
     connection.nickpassword = socket.irc.nickpassword;
-    connection.accountsasl = socket.irc.accountsasl;													  
+    connection.accountsasl = socket.irc.accountsasl;
+    connection.account = null;		
     connection.user = socket.irc.user;
     connection.ircuser = socket.irc.user;
     connection.server = socket.irc.server;
@@ -904,7 +921,11 @@ function clientConnect(socket) {
               this.write("CAP END\n");
             }
           }
-		  
+
+          if(data[1]=="900") {
+            this.account = data[4];
+          }
+
           let s = data[1];
 
           if ( this.messagetags && (data[2]=="JOIN" || data[2]=="PART" || data[2]=="QUIT" || data[2]=="MODE" || data[2]=="PING" || data[2]=="NICK" || data[2]=="KICK") ) {
@@ -1065,7 +1086,7 @@ function clientConnect(socket) {
                     }
                   }
                   else {
-                    _regex = new RegExp(_mode[i],"g")
+                    _regex = new RegExp(_mode[i],"g");
                     if(_sender==_target && _target==this.nick || _sender=="NickServ" && _target==this.nick || _sender=="OperServ" && _target==this.nick)
                       this.umode=this.umode.replace(_regex,"");
                     else if(curchan != null && (_mode[i]!='o' && _mode[i]!='v' && _mode[i]!='h'))
@@ -1320,8 +1341,75 @@ function clientConnect(socket) {
               this.parents[m].write(lines[n]+"\n");
             }
           }
+
+          // Check the last 300 messages that will be sent on the irc web client to sort the new messages
+          if (MSG_REDISTRIBUTION && this.messagetags) {
+            if (lines[n].substr(0,1) == "@") { // only line tags
+              /*
+                  result_messagetags = lines[n].split(" ")[0]; // @time=2020-12-31T05:46:20.951Z;msgid=bUxJGIgyI3Xafw42ccbHTd;account=Sympa
+                  nick: line.split(" ")[1].substr(1).split("!")[0]
+                  ident: line.split(" ")[1].substr(1).split("!")[1].split("@")[0]
+                  hostname: line.split(" ")[1].substr(1).split("!")[1].split("@")[1]
+                  cmd: line.split(" ")[2]
+                  target: line.split(" ")[3]
+                  message: line.split(" ").splice(4).join(' ').substr(1)
+                  account: result_messagetags.split(";")[2].split("=")[1]
+                  time: result_messagetags.split(";")[0].replace("@time=","")
+                  msgid: result_messagetags.split(";")[1].split("=")[1]
+              */
+             
+                // Ignore CTCP request/responses
+                if (
+                    (lines[n].split(" ")[2] === 'PRIVMSG' || lines[n].split(" ")[2] === 'NOTICE') &&
+                    lines[n].split(" ").splice(4).join(' ').substr(1) && lines[n].split(" ").splice(4).join(' ').substr(1)[0] === '\x01'
+                ) {
+                    // We do want to log ACTIONs though
+                    if (!lines[n].split(" ").splice(4).join(' ').substr(1).startsWith('\x01ACTION ')) {
+                        console.log("Ignoring CTCP");
+                        return;
+                    }
+                }
+
+                if (lines[n].split(" ")[2] === "PRIVMSG" || lines[n].split(" ")[2] === "NOTICE") {
+                  for(key in this.buffers) {
+                    if(this.buffers.hasOwnProperty(key)) {
+                      _n = lines[n].split(" ")[3]; //PRIVMSG <target>
+                      _l = 1;
+
+                      // Number of targets found
+                      for(x=0; x<this.buffers[key].privmsgnotice.length; x++) {
+                        if ( this.buffers[key].privmsgnotice[x].target === _n) {
+                          _l++;
+                        }
+                      }
+
+                      // If it exceeds 300, then the first is always deleted
+                      for(x=0; x<this.buffers[key].privmsgnotice.length; x++) {
+                        if ( this.buffers[key].privmsgnotice[x].target === _n) {
+                          if (_l>=300) {
+                            console.log("exceeds: %s", _l);
+                            this.buffers[key].privmsgnotice.splice(x,1);
+                            break;
+                          }
+                        }
+                      }
+
+                      // Adding all messages
+                      this.buffers[key].privmsgnotice.push({
+                        target: _n, 
+                        line: lines[n]+"\n"
+                      });
+                    }
+                  }
+                }
+           
+            }
+
+
+
+          }
           // store clientbuf if not connected
-          if(lines[n].indexOf("PRIVMSG")>=0 || lines[n].indexOf("NOTICE")>=0 || lines[n].indexOf("WALLOPS")>=0 || lines[n].indexOf("GLOBOPS")>=0 || lines[n].indexOf("CHATOPS")>=0) {
+          else if(lines[n].indexOf("PRIVMSG")>=0 || lines[n].indexOf("NOTICE")>=0 || lines[n].indexOf("WALLOPS")>=0 || lines[n].indexOf("GLOBOPS")>=0 || lines[n].indexOf("CHATOPS")>=0) {
             for(key in this.buffers) {
               if(this.buffers.hasOwnProperty(key)) {
                 if(!this.buffers[key].connected) {
