@@ -55,6 +55,8 @@ bouncerShack: ping ack timeout
 bouncerDefaultOpmode: auto op/voice/hop mode default (can be turned on per client using /jbnc)
 bouncerTimeout: how long until after no clients connected will the user stay connected
 bufferMaxSize: maximum # of bytes a client buffer can hold before its terminated or 0 for unlimited
+MsgRedistribution: If enabled, will override the entire old system installed by default, and it will save the last 300 lines for both privmsgs and notices (except ctcp) and all separately by channel and by recipient. It records everything even if the client is logged into JBNC or not.
+As soon as the client reconnects to JBNC, it will send all privmsgs / notices to the client. The IRC client should sort the msgids by checking if they are already received, if they are not received then the client updates the new messages. Once the client has updated all the new messages, then it should automatically send "/jbnc logclear" to remove the entire "privmsgnotice" array from the client connected to the JBNC.
 ```
 
 3. Run
