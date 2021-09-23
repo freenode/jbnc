@@ -1254,6 +1254,8 @@ function clientConnect(socket) {
             case '353':
               _channel=data[4].toLowerCase().trim();
               _names=lines[n].substr(1).split(" :")[1].trim().split(" ");
+              if (!this.channels[_channel])
+              break;
               if(!this._getnames[_channel]) {
                 this._getnames[_channel]=true;
                 if(!this.channels[_channel]) {
@@ -1262,6 +1264,8 @@ function clientConnect(socket) {
                 this.channels[_channel].names=[];
               }
               for(x=0;x<_names.length;x++) {
+                if (!this.channels[_channel])
+                break;
                 this.channels[_channel].names.push(_names[x].trim().split("!")[0]);
 
                 if (typeof this.channels[_channel].userhosts === 'undefined')
