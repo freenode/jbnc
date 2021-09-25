@@ -352,6 +352,14 @@ server = doServer(tlsOptions,function(socket) {
               }
               else {
                 switch(command[1].toUpperCase().trim()) {
+                  case 'CHANNELS':
+                    for (key in connections[this.hash].channels) {
+                      if (connections[this.hash].channels.hasOwnProperty(key)) {
+                          this.write(":*jbnc NOTICE * :Active channel: "+connections[this.hash].channels[key].name+"\n");
+                      }
+                    }
+                    this.write(":*jbnc NOTICE * :End of active channels\n");
+                    break;
                   case 'OPMODE':
                     if(command[2]) {
                       if(command[2].toLowerCase().trim()=="on") {
