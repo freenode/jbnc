@@ -1,4 +1,4 @@
-// jbnc v0.5
+// jbnc v0.6
 // Copyright (C) 2020 Andrew Lee <andrew@imperialfamily.com>
 // All Rights Reserved.
 const tls = require('tls');
@@ -249,7 +249,7 @@ server = doServer(tlsOptions,function(socket) {
               }
               else if(commands[1]) {
                 this.irc.nick=commands[1].trim();
-                /*if(this.irc.user) {
+                if(this.irc.user) {
                   this.hash=hash(this.irc.nick+this.irc.user+this.irc.password+this.irc.server+this.irc.port.toString());
                   if(connections[socket.hash]) {
                     clientReconnect(this);
@@ -257,7 +257,7 @@ server = doServer(tlsOptions,function(socket) {
                   else {
                     clientConnect(this);
                   }
-                }*/
+                }
               }
               break;
             case 'USER':
@@ -514,10 +514,10 @@ server = doServer(tlsOptions,function(socket) {
               }
               break;
             default:
-              if(typeof connections[this.hash] === 'undefined' )
-              continue;
+              /*if(typeof connections[this.hash] === 'undefined' )
+              continue;*/
               // supress joins of channels we are already in because some clients dont react properly.
-              if(input[i].toString().substr(0,4)=="JOIN") {
+              if(input[i] && connections[this.hash] && input[i].toString().substr(0,4)=="JOIN") {
                 command=input[i].toString().trim().split(" ");
                 if(!command[1])
                   break;
@@ -652,7 +652,12 @@ function clientReconnect(socket) {
       if(connection.channels.hasOwnProperty(key)) {
         _channel=connection.channels[key];
 
-        socket.write("@time=2020-07-26T09:20:54.103Z;msgid=null :"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN :"+_channel.name+"\n");
+        if (_channel.name != "undefined" || typeof _channel.name !== 'undefined') {
+          socket.write("@time="+new Date().toISOString()+";msgid=back :"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN :"+_channel.name+"\n");
+        } else {
+          continue;
+        }
+
         _mode_params='';
     
         if ( typeof _channel.modes === 'undefined' )
@@ -857,6 +862,9 @@ function clientConnect(socket) {
                 this.write("CAP REQ :message-tags\n");
                 this.messagetags=true;
               }
+              if(lines[n].trim().indexOf("away-notify")>=0) {
+                this.write("CAP REQ :away-notify\n");
+              }
               if(this.messagetags && lines[n].trim().indexOf("server-time")>=0) {
                 this.write("CAP REQ :server-time\n");
               }
@@ -885,17 +893,19 @@ function clientConnect(socket) {
             this.nickpassword;
 
             const b = Buffer.from(auth_str, 'utf8');
-            let b64 = b.toString('base64');
+            const b64 = b.toString('base64');
     
-            while (b64.length >= 400) {
-                this.write('AUTHENTICATE :' + b64.slice(0, 399) + '\n');
-                b64 = b64.slice(399);
+            const singleAuthCommandLength = 400;
+            let sliceOffset = 0;
+
+            while (b64.length > sliceOffset) {
+                this.write('AUTHENTICATE ' + b64.substr(sliceOffset, singleAuthCommandLength) + '\n');
+                sliceOffset += singleAuthCommandLength;
             }
-            if (b64.length > 0) {
-              this.write('AUTHENTICATE :' + b64 + '\n');
-            } else {
+
+            if (b64.length === sliceOffset)
               this.write('AUTHENTICATE :+\n');
-            }
+
             continue;
           }
 
@@ -913,6 +923,9 @@ function clientConnect(socket) {
             }
           }
 		  
+          if(data[1]=="900") {
+            this.account = data[4];
+          }
           let s = data[1];
 
           if ( this.messagetags && (data[2]=="JOIN" || data[2]=="PART" || data[2]=="QUIT" || data[2]=="MODE" || data[2]=="PING" || data[2]=="NICK" || data[2]=="KICK") ) {
@@ -999,7 +1012,7 @@ function clientConnect(socket) {
                                                          _mode[i]=='j')) {
                       if(_mode[i]=='o' || _mode[i]=='v' || _mode[i]=='h') {
                         for(c=0;c<curchan.names.length;c++) {
-                          if(curchan.names[c].replace("@","").replace("+","").replace("%","")==_mode_target[_mode_count]) {
+                          if(curchan.names[c].replace(/(&|~|@|%|\+)/,"")==_mode_target[_mode_count]) {
                             switch(_mode[i]) {
                               case 'o':
                                 _this_target = _mode_target[_mode_count] + "!" + (curchan.userhosts[c]?curchan.userhosts[c]:"*@*");
@@ -1014,7 +1027,7 @@ function clientConnect(socket) {
                               case 'v':
                                 _this_target = _mode_target[_mode_count] + "!" + (curchan.userhosts[c]?curchan.userhosts[c]:"*@*");
                                 if(curchan.names[c].indexOf("+")==-1) {
-                                  if(curchan.names[c].indexOf("@")==-1) {
+                                  if(curchan.names[c].indexOf("&")==-1 || curchan.names[c].indexOf("~")==-1 || curchan.names[c].indexOf("@")==-1) {
                                     if(curchan.names[c].indexOf("%")==-1) {
                                       curchan.names[c]="+"+curchan.names[c];
                                     }
@@ -1039,7 +1052,7 @@ function clientConnect(socket) {
                               case 'h':
                                 _this_target = _mode_target[_mode_count] + "!" + (curchan.userhosts[c]?curchan.userhosts[c]:"*@*");
                                 if(curchan.names[c].indexOf("%")==-1) {
-                                  if(curchan.names[c].indexOf("@")==-1) {
+                                  if(curchan.names[c].indexOf("&")==-1 || curchan.names[c].indexOf("~")==-1 || curchan.names[c].indexOf("@")==-1) {
                                     curchan.names[c]="%"+curchan.names[c];
                                   }
                                   else
@@ -1073,21 +1086,21 @@ function clientConnect(socket) {
                     }
                   }
                   else {
-                    _regex = new RegExp(_mode[i],"g")
+                    _regex = new RegExp(_mode[i],"g");
                     if(_sender==_target && _target==this.nick || _sender=="NickServ" && _target==this.nick || _sender=="OperServ" && _target==this.nick)
                       this.umode=this.umode.replace(_regex,"");
-                    else if(curchan != null && (_mode[i]!='o' && _mode[i]!='v' && _mode[i]!='h'))
+                    else if(curchan != null && (_mode[i]!='o' && _mode[i]!='v' && _mode[i]!='h') && curchan.modes)
                       curchan.modes=curchan.modes.replace(_regex,"");
                     if((_target.indexOf("#")!=-1||_target.indexOf("&")!=-1) && (_mode[i]=='o' || _mode[i]=='k' || _mode[i]=='v' || _mode[i]=='h' || _mode[i]=='l' ||
                                                          _mode[i]=='e' || _mode[i]=='b' || _mode[i]=='I' || _mode[i]=='q' || _mode[i]=='f' ||
                                                          _mode[i]=='j')) {
                       if(_mode[i]=='o' || _mode[i]=='v' || _mode[i]=='h') {
                         for(c=0;c<curchan.names.length;c++) {
-                          if(curchan.names[c].replace(/\@/,"").replace(/\%/,"").replace(/\+/,"")==_mode_target[_mode_count]) {
+                          if(curchan.names[c].replace(/(&|~|@|%|\+)/,"")==_mode_target[_mode_count]) {
                             switch(_mode[i]) {
                               case 'o':
                                 _this_target = _mode_target[_mode_count] + "!" + (curchan.userhosts[c]?curchan.userhosts[c]:"*@*");
-                                curchan.names[c]=curchan.names[c].replace("@","");
+                                curchan.names[c]=curchan.names[c].replace(/(&|~|@)/,"");
                                 if(_mode_target[_mode_count]!=this.nick && curchan.aop && curchan.aop.indexOf(_this_target)>=0 && this.opmode) {
                                   curchan.aop.splice(curchan.aop.indexOf(_this_target),1);
                                 }
@@ -1180,13 +1193,13 @@ function clientConnect(socket) {
                   if(this.channels[__channel]) {
                     this.channels[__channel].names.push(_nick);
                     this.channels[__channel].userhosts.push(this.userHostInNames?_userhost:"*@*");
-                    if(this.channels[__channel].isop && this.channels[__channel].aop.indexOf(_nick+"!"+_userhost)>=0 && this.opmode) {
+                    if(this.channels[__channel].isop && this.channels[__channel].aop && this.channels[__channel].aop.indexOf(_nick+"!"+_userhost)>=0 && this.opmode) {
                       this.write("MODE "+this.channels[__channel].name+" +o "+_nick+"\n");
                     }
-                    if((this.channels[__channel].isop || this.channels[__channel].ishop) && this.channels[__channel].aoh.indexOf(_nick+"!"+_userhost)>=0 && this.opmode) {
+                    if((this.channels[__channel].isop || this.channels[__channel].ishop) && this.channels[__channel].aoh && this.channels[__channel].aoh.indexOf(_nick+"!"+_userhost)>=0 && this.opmode) {
                       this.write("MODE "+this.channels[__channel].name+" +h "+_nick+"\n");
                     }
-                    if((this.channels[__channel].isop || this.channels[__channel].ishop) && this.channels[__channel].aov.indexOf(_nick+"!"+_userhost)>=0 && this.opmode) {
+                    if((this.channels[__channel].isop || this.channels[__channel].ishop) && this.channels[__channel].aov && this.channels[__channel].aov.indexOf(_nick+"!"+_userhost)>=0 && this.opmode) {
                       this.write("MODE "+this.channels[__channel].name+" +v "+_nick+"\n");
                     }
                   }
@@ -1226,7 +1239,7 @@ function clientConnect(socket) {
               }
               else if(this.channels[_channel]) {
                 for(x=0;x<this.channels[_channel].names.length;x++)
-                  if(this.channels[_channel].names[x].replace("@","").replace("+","").replace("~","").replace("%","")==_target)
+                  if(this.channels[_channel].names[x].replace(/(&|~|@|%|\+)/,"")==_target)
                     break;
                 this.channels[_channel].names.splice(x,1);
               }
@@ -1239,7 +1252,7 @@ function clientConnect(socket) {
               }
               else if(this.channels[_target]) {
                 for(x=0;x<this.channels[_target].names.length;x++)
-                  if(this.channels[_target].names[x].replace("@","").replace("+","").replace("~","").replace("%","")==_sender)
+                  if(this.channels[_target].names[x].replace(/(&|~|@|%|\+)/,"")==_sender)
                     break;
                 this.channels[_target].names.splice(x,1);
                 this.channels[_target].userhosts.splice(x,1);
@@ -1250,7 +1263,7 @@ function clientConnect(socket) {
               for (key in this.channels) {
                 if (this.channels.hasOwnProperty(key)) {
                   for(x=0;x<this.channels[key].names.length;x++) {
-                    if(this.channels[key].names[x].replace("@","").replace("+","").replace("~","").replace("%","")==_sender) {
+                    if(this.channels[key].names[x].replace(/(&|~|@|%|\+)/,"")==_sender) {
                     this.channels[key].names.splice(x,1);
                     this.channels[key].userhosts.splice(x,1);
                     break;
@@ -1300,8 +1313,8 @@ function clientConnect(socket) {
               for (key in this.channels) {
                 if (this.channels.hasOwnProperty(key)) {
                   for(x=0;x<this.channels[key].names.length;x++) {
-                    if(this.channels[key].names[x].replace("@","").replace("+","").replace("~","").replace("%","")==_sender) {
-                    _statut = ( /(@|%|\+)/.test(this.channels[key].names[x].substr(0,1)) ? this.channels[key].names[x].substr(0,1) : "" );
+                    if(this.channels[key].names[x].replace(/(&|~|@|%|\+)/,"")==_sender) {
+                      _statut = ( /(&|~|@|%|\+)/.test(this.channels[key].names[x].substr(0,1)) ? this.channels[key].names[x].substr(0,1) : "" );
                     this.channels[key].names.splice(x,1);
                     this.channels[key].names.push(_statut+_new);
                     break;
