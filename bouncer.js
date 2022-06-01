@@ -652,7 +652,7 @@ function clientReconnect(socket) {
       if(connection.channels.hasOwnProperty(key)) {
         _channel=connection.channels[key];
 
-        if (_channel.name != "undefined" || typeof _channel.name !== 'undefined') {
+        if (_channel && _channel.name) {
           socket.write("@time="+new Date().toISOString()+";msgid=back :"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN :"+_channel.name+"\n");
         } else {
           continue;
