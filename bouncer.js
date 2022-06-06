@@ -1022,7 +1022,7 @@ function clientConnect(socket) {
                     else if((_target.indexOf("#")!=-1||_target.indexOf("&")!=-1) && (_mode[i]=='o' || _mode[i]=='k' || _mode[i]=='v' || _mode[i]=='h' || _mode[i]=='l' ||
                                                          _mode[i]=='e' || _mode[i]=='b' || _mode[i]=='I' || _mode[i]=='q' || _mode[i]=='f' ||
                                                          _mode[i]=='j')) {
-                      if(_mode[i]=='o' && curchan.names || _mode[i]=='v' && curchan.names || _mode[i]=='h' && curchan.names) {
+                      if(_mode[i]=='o' && curchan && curchan.names || _mode[i]=='v' && curchan && curchan.names || _mode[i]=='h' && curchan && curchan.names) {
                         for(c=0;c<curchan.names.length;c++) {
                           if(curchan.names[c].replace(/(&|~|@|%|\+)/,"")==_mode_target[_mode_count]) {
                             switch(_mode[i]) {
@@ -1106,7 +1106,7 @@ function clientConnect(socket) {
                     if((_target.indexOf("#")!=-1||_target.indexOf("&")!=-1) && (_mode[i]=='o' || _mode[i]=='k' || _mode[i]=='v' || _mode[i]=='h' || _mode[i]=='l' ||
                                                          _mode[i]=='e' || _mode[i]=='b' || _mode[i]=='I' || _mode[i]=='q' || _mode[i]=='f' ||
                                                          _mode[i]=='j')) {
-                      if(_mode[i]=='o' && curchan.names || _mode[i]=='v' && curchan.names || _mode[i]=='h' && curchan.names) {
+                      if(_mode[i]=='o' && curchan && curchan.names || _mode[i]=='v' && curchan && curchan.names || _mode[i]=='h' && curchan && curchan.names) {
                         for(c=0;c<curchan.names.length;c++) {
                           if(curchan.names[c].replace(/(&|~|@|%|\+)/,"")==_mode_target[_mode_count]) {
                             switch(_mode[i]) {
