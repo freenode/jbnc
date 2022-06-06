@@ -340,7 +340,7 @@ server = doServer(tlsOptions,function(socket) {
                 this.write(":*jbnc NOTICE * :BUFFERS - Show what buffers exist and their size\n");
                 this.write(":*jbnc NOTICE * :OPMODE - Enable or disable auto-op/hop/voice\n");
                 this.write(":*jbnc NOTICE * :CHANNELS - List all active channels\n");
-                this.write(":*jbnc NOTICE * :USERMASKS - List current state of userhosts\n");
+                this.write(":*jbnc NOTICE * :USERHOSTS - List current state of userhosts\n");
                 if(!this.admin)
                   this.write(":*jbnc NOTICE * :ADMIN - Get admin access\n");
                 else {
