@@ -1,4 +1,4 @@
-// jbnc v0.6
+// jbnc v0.7
 // Copyright (C) 2020 Andrew Lee <andrew@imperialfamily.com>
 // All Rights Reserved.
 const tls = require('tls');
@@ -249,7 +249,7 @@ server = doServer(tlsOptions,function(socket) {
               }
               else if(commands[1]) {
                 this.irc.nick=commands[1].trim();
-                if(this.irc.user) {
+                if(false&&this.irc.user) {
                   this.hash=hash(this.irc.nick+this.irc.user+this.irc.password+this.irc.server+this.irc.port.toString());
                   if(connections[socket.hash]) {
                     clientReconnect(this);
@@ -339,6 +339,8 @@ server = doServer(tlsOptions,function(socket) {
                 this.write(":*jbnc NOTICE * :CONN - Show which devices are connected to your bouncer user connection\n");
                 this.write(":*jbnc NOTICE * :BUFFERS - Show what buffers exist and their size\n");
                 this.write(":*jbnc NOTICE * :OPMODE - Enable or disable auto-op/hop/voice\n");
+                this.write(":*jbnc NOTICE * :CHANNELS - List all active channels\n");
+                this.write(":*jbnc NOTICE * :USERMASKS - List current state of userhosts\n");
                 if(!this.admin)
                   this.write(":*jbnc NOTICE * :ADMIN - Get admin access\n");
                 else {
@@ -355,10 +357,19 @@ server = doServer(tlsOptions,function(socket) {
                   case 'CHANNELS':
                     for (key in connections[this.hash].channels) {
                       if (connections[this.hash].channels.hasOwnProperty(key)) {
-                          this.write(":*jbnc NOTICE * :Active channel: "+connections[this.hash].channels[key].name+"\n");
+                        this.write(":*jbnc NOTICE * :Active channel: "+connections[this.hash].channels[key].name+"\n");
                       }
                     }
                     this.write(":*jbnc NOTICE * :End of active channels\n");
+                    break;
+                  case 'USERHOSTS':
+                    for (key in connections[this.hash].channels) {
+                      if (connections[this.hash].channels.hasOwnProperty(key)) {
+                        for(x=0;x<connections[this.hash].channels[key].userhosts.length;x++)
+                        this.write(":*jbnc NOTICE * :"+x+") "+connections[this.hash].channels[key].userhosts[x]+" ("+connections[this.hash].channels[key].names[x]+")\n");
+                      }
+                    }
+                    this.write(":*jbnc NOTICE * :End of active userhosts\n");
                     break;
                   case 'OPMODE':
                     if(command[2]) {
@@ -655,6 +666,7 @@ function clientReconnect(socket) {
         if (_channel && _channel.name) {
           socket.write("@time="+new Date().toISOString()+";msgid=back :"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN :"+_channel.name+"\n");
         } else {
+          console.error(`${parseInt(Number(new Date()) / 1000)}  Probleme bug undefined on join : ${JSON.stringify(_channel)}`);
           continue;
         }
 
@@ -1010,7 +1022,7 @@ function clientConnect(socket) {
                     else if((_target.indexOf("#")!=-1||_target.indexOf("&")!=-1) && (_mode[i]=='o' || _mode[i]=='k' || _mode[i]=='v' || _mode[i]=='h' || _mode[i]=='l' ||
                                                          _mode[i]=='e' || _mode[i]=='b' || _mode[i]=='I' || _mode[i]=='q' || _mode[i]=='f' ||
                                                          _mode[i]=='j')) {
-                      if(_mode[i]=='o' || _mode[i]=='v' || _mode[i]=='h') {
+                      if(_mode[i]=='o' && curchan.names || _mode[i]=='v' && curchan.names || _mode[i]=='h' && curchan.names) {
                         for(c=0;c<curchan.names.length;c++) {
                           if(curchan.names[c].replace(/(&|~|@|%|\+)/,"")==_mode_target[_mode_count]) {
                             switch(_mode[i]) {
@@ -1094,7 +1106,7 @@ function clientConnect(socket) {
                     if((_target.indexOf("#")!=-1||_target.indexOf("&")!=-1) && (_mode[i]=='o' || _mode[i]=='k' || _mode[i]=='v' || _mode[i]=='h' || _mode[i]=='l' ||
                                                          _mode[i]=='e' || _mode[i]=='b' || _mode[i]=='I' || _mode[i]=='q' || _mode[i]=='f' ||
                                                          _mode[i]=='j')) {
-                      if(_mode[i]=='o' || _mode[i]=='v' || _mode[i]=='h') {
+                      if(_mode[i]=='o' && curchan.names || _mode[i]=='v' && curchan.names || _mode[i]=='h' && curchan.names) {
                         for(c=0;c<curchan.names.length;c++) {
                           if(curchan.names[c].replace(/(&|~|@|%|\+)/,"")==_mode_target[_mode_count]) {
                             switch(_mode[i]) {
@@ -1191,8 +1203,9 @@ function clientConnect(socket) {
                 }
                 else {
                   if(this.channels[__channel]) {
+                    this.channels[__channel].name=_channel;
                     this.channels[__channel].names.push(_nick);
-                    this.channels[__channel].userhosts.push(this.userHostInNames?_userhost:"*@*");
+                    this.channels[__channel].userhosts.push(!!_userhost?_userhost:"*@*");
                     if(this.channels[__channel].isop && this.channels[__channel].aop && this.channels[__channel].aop.indexOf(_nick+"!"+_userhost)>=0 && this.opmode) {
                       this.write("MODE "+this.channels[__channel].name+" +o "+_nick+"\n");
                     }
