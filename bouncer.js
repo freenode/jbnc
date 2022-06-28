@@ -925,6 +925,7 @@ function clientConnect(socket) {
           if(data[1]=="904") {
             if(!this.authenticated) {
               this.end();
+              continue;
             }
           }
 
