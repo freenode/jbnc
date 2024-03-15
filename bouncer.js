@@ -1,4 +1,4 @@
-// jbnc v0.7
+// jbnc v0.8
 // Copyright (C) 2020 Andrew Lee <andrew@imperialfamily.com>
 // All Rights Reserved.
 const tls = require('tls');
@@ -862,35 +862,54 @@ function clientConnect(socket) {
             console.log("> "+lines[n]);
           data = lines[n].trim().split(" ");
           if(data[1]=="CAP") {
-            if(data[3] && data[3]=='LS') {
-              if(lines[n].trim().indexOf("multi-prefix")>=0) {
-                this.write("CAP REQ :multi-prefix\n");
-              }
-              if(lines[n].trim().indexOf("userhost-in-names")>=0) {
-                this.write("CAP REQ :userhost-in-names\n");
+
+            // :irc.example.net CAP * LS :invite-notify ...
+            // :irc.example.net CAP * NEW :invite-notify ...
+            if(data[3] && (data[3]=='LS' || data[3]==='NEW')) {
+              
+              let wantedCaps = new Set([
+                'server-time',
+                'multi-prefix',
+                'away-notify',
+                'account-notify',
+                'account-tag',
+                'invite-notify',
+                'extended-join',
+                'userhost-in-names',
+                'cap-notify',
+                'sasl',
+                'message-tags',
+              ]);
+
+              let offeredCaps = lines[n].trim().split(' ');
+
+                      
+              let requestingCaps = offeredCaps
+              .filter((cap) => (
+                  wantedCaps.has(cap.split('=')[0].toLowerCase())
+              ))
+              .map((cap) => cap.split('=')[0]);
+
+              // <- :irc.example.net CAP testor LIST :away-notify ...
+
+              if (requestingCaps.includes("userhost-in-names"))
                 this.userhostInNames=true;
-              }
-              if(lines[n].trim().indexOf("message-tags")>=0) {
-                this.write("CAP REQ :message-tags\n");
+
+              if (requestingCaps.includes("message-tags"))
                 this.messagetags=true;
-              }
-              if(lines[n].trim().indexOf("away-notify")>=0) {
-                this.write("CAP REQ :away-notify\n");
-              }
-              if(this.messagetags && lines[n].trim().indexOf("server-time")>=0) {
-                this.write("CAP REQ :server-time\n");
-              }
-              if(lines[n].trim().indexOf("sasl")>=0) {
-                this.write("CAP REQ :sasl\n");
+                
+              if (requestingCaps.includes("sasl"))
                 this.sasl=true;
-              }
-              if (!this.sasl)
+
+              if (data[3]!=='NEW' && requestingCaps.length === 0) {
                 this.write("CAP END\n");
+              } else {
+                this.write(`CAP REQ :${requestingCaps.join(' ')}\n`);
+              }
+
             }
             else if(this.sasl && data[3] && data[3]=='ACK') {
-              if(lines[n].trim().indexOf("sasl")>=0) {
-                this.write("AUTHENTICATE :PLAIN\n");
-              }
+              this.write("AUTHENTICATE :PLAIN\n");
             }
             else {
               if (!this.sasl)
