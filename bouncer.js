@@ -909,7 +909,7 @@ function clientConnect(socket) {
 
             }
             else if(this.sasl && data[3] && data[3]=='ACK') {
-              this.write("AUTHENTICATE :PLAIN\n");
+              this.write("AUTHENTICATE PLAIN\n");
             }
             else {
               if (!this.sasl)
@@ -935,7 +935,7 @@ function clientConnect(socket) {
             }
 
             if (b64.length === sliceOffset)
-              this.write('AUTHENTICATE :+\n');
+              this.write('AUTHENTICATE +\n');
 
             continue;
           }
@@ -954,6 +954,10 @@ function clientConnect(socket) {
               this.write("CAP END\n");
             }
           }
+
+          if(data[1]=="901") {
+            this.account = '';
+          }
 		  
           if(data[1]=="900") {
             this.account = data[4];
@@ -968,7 +972,7 @@ function clientConnect(socket) {
             case '001':
               if(!this.authenticated) {
                 this.authenticated=true;
-                this.name_original=data[2];
+                this.nick_original=data[2];
                 if(lines[n].lastIndexOf("@")>0) {
                   this.ircuser=lines[n].substr(lines[n].lastIndexOf("!")+1,lines[n].lastIndexOf("@")-lines[n].lastIndexOf("!")-1);
                   this.host=lines[n].substr(lines[n].lastIndexOf("@")+1).trim();
