@@ -40,6 +40,7 @@ const SERVER_PORT = BOUNCER_MODE=='gateway'?(config.serverPort?config.serverPort
 const INGRESSWEBIRC = config.ingresswebircPassword?config.ingresswebircPassword:'';
 const SERVER = BOUNCER_MODE=='gateway'?(config.server?config.server:''):'';
 const DEBUG = config.debug?config.debug:false;
+const IRCV3_MONITOR = config.ircv3Monitor?true:false;
 
 
 // Reload passwords on sighup
@@ -645,6 +646,8 @@ function clientReconnect(socket) {
     socket.write(connection.connectbuf+"\n");
     if(connection.nick!=socket.irc.nick)
       socket.write(":"+connection.nick_original+" NICK "+connection.nick+"\n");
+    if (IRCV3_MONITOR)
+      connection.write("MONITOR S\n");
     if(!connection.connected) {
       connection.write("AWAY\n");
       connection.connected=true;
