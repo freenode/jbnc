@@ -40,7 +40,6 @@ const SERVER_PORT = BOUNCER_MODE=='gateway'?(config.serverPort?config.serverPort
 const INGRESSWEBIRC = config.ingresswebircPassword?config.ingresswebircPassword:'';
 const SERVER = BOUNCER_MODE=='gateway'?(config.server?config.server:''):'';
 const DEBUG = config.debug?config.debug:false;
-const IRCV3_MONITOR = config.ircv3Monitor?true:false;
 
 
 // Reload passwords on sighup
@@ -319,6 +318,21 @@ server = doServer(tlsOptions,function(socket) {
               break;
             case 'QUIT':
               this.end();
+              break;
+            case 'MONITOR':
+              if(this.hash && connections[this.hash]) {
+                if(command[1]=="+"){
+                  if(!connections[this.hash].ircv3Monitor)
+                    connections[this.hash].ircv3Monitor=true;
+                  connections[this.hash].write("MONITOR + "+command.slice(2).toString()+"\n");
+                }
+                else if(command[1]=="-"){
+                  connections[this.hash].write("MONITOR - "+command.slice(2).toString()+"\n");
+                }
+                else {
+                  connections[this.hash].write("MONITOR "+command.slice(1).toString()+"\n");
+                }
+              }
               break;
             case 'CAP':
               this.write(":*jbnc NOTICE * :*** No CAPabilities available. ***\n");
@@ -646,7 +660,7 @@ function clientReconnect(socket) {
     socket.write(connection.connectbuf+"\n");
     if(connection.nick!=socket.irc.nick)
       socket.write(":"+connection.nick_original+" NICK "+connection.nick+"\n");
-    if (IRCV3_MONITOR)
+    if(connections[this.hash].ircv3Monitor)
       connection.write("MONITOR S\n");
     if(!connection.connected) {
       connection.write("AWAY\n");
@@ -810,6 +824,7 @@ function clientConnect(socket) {
     connection.opmode = BOUNCER_DEFAULT_OPMODE;
     connection.userhostInNames=false;
     connection.messagetags=false;
+    connection.ircv3Monitor=false;
 
     // Temp Buffer
     connection._buffer='';
