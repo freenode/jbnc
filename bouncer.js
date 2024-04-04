@@ -660,7 +660,7 @@ function clientReconnect(socket) {
     socket.write(connection.connectbuf+"\n");
     if(connection.nick!=socket.irc.nick)
       socket.write(":"+connection.nick_original+" NICK "+connection.nick+"\n");
-    if(connections[this.hash].ircv3Monitor)
+    if(connection.ircv3Monitor)
       connection.write("MONITOR S\n");
     if(!connection.connected) {
       connection.write("AWAY\n");
