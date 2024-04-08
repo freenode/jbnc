@@ -626,7 +626,7 @@ server = doServer(tlsOptions,function(socket) {
           connections[this.hash].connected=false;
           connections[this.hash].write("AWAY :away\n");
           if(BOUNCER_TIMEOUT!=0 && BOUNCER_TIMEOUT!=null) {
-            connections[this.hash].gone=setTimeout(function(x){try{connections[x].end();}catch(e){} try{delete connections[x];}catch(e){} },BOUNCER_TIMEOUT*1000,this.hash);
+            connections[this.hash].gone=setTimeout(()=>{connections[this.hash].end();delete connections[this.hash];},BOUNCER_TIMEOUT*1000,this.hash);
           }
         }
       }
@@ -681,7 +681,10 @@ function clientReconnect(socket) {
         _channel=connection.channels[key];
 
         if (_channel && _channel.name) {
-          socket.write("@time="+new Date().toISOString()+";msgid=back :"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN :"+_channel.name+"\n");
+          if(connection.ircv3_extendedjoin)
+            socket.write("@time="+new Date().toISOString()+";msgid=back :"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN "+_channel.name+" "+(connection.account?connection.account:'*')+" :"+connection.realname+"\n");
+          else
+            socket.write("@time="+new Date().toISOString()+";msgid=back :"+connection.nick+"!"+connection.ircuser+"@"+connection.host+" JOIN :"+_channel.name+"\n");
         } else {
           console.error(`${parseInt(Number(new Date()) / 1000)}  Probleme bug undefined on join : ${JSON.stringify(_channel)}`);
           continue;
@@ -825,6 +828,7 @@ function clientConnect(socket) {
     connection.userhostInNames=false;
     connection.messagetags=false;
     connection.ircv3Monitor=false;
+    connection.ircv3_extendedjoin=false;
 
     // Temp Buffer
     connection._buffer='';
@@ -918,6 +922,9 @@ function clientConnect(socket) {
                 
               if (requestingCaps.includes("sasl"))
                 this.sasl=true;
+
+              if (requestingCaps.includes("extended-join"))
+                this.ircv3_extendedjoin=true;
 
               if (data[3]!=='NEW' && requestingCaps.length === 0) {
                 this.write("CAP END\n");
