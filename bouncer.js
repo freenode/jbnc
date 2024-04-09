@@ -1271,6 +1271,7 @@ function clientConnect(socket) {
                   if(this.channels[__channel]) {
                     this.channels[__channel].name=_channel;
                   }
+                  this.write(`MODE ${_channel}\n`);
                 }
                 else {
                   if(this.channels[__channel]) {
