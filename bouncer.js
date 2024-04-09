@@ -626,7 +626,7 @@ server = doServer(tlsOptions,function(socket) {
           connections[this.hash].connected=false;
           connections[this.hash].write("AWAY :away\n");
           if(BOUNCER_TIMEOUT!=0 && BOUNCER_TIMEOUT!=null) {
-            connections[this.hash].gone=setTimeout(()=>{connections[this.hash].end();delete connections[this.hash];},BOUNCER_TIMEOUT*1000,this.hash);
+            connections[this.hash].gone=setTimeout(()=>{try{connections[this.hash].end();}catch(e){} delete connections[this.hash];},BOUNCER_TIMEOUT*1000,this.hash);
           }
         }
       }
