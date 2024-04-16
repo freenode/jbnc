@@ -1425,6 +1425,12 @@ function clientConnect(socket) {
             this.write("PONG "+data[1].substr(1).trim()+"\n");
             continue;
           }
+          if (data[0] == "ERROR") {
+            if(this.gone) {
+              clearTimeout(this.gone);
+              this.gone='';
+            }
+          }
           if(lines[n].length>1) {
             for(m=0;m<this.parents.length;m++) {
               this.parents[m].write(lines[n]+"\n");
