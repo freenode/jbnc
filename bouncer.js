@@ -60,11 +60,7 @@ process.on('uncaughtException', (err, origin) => {
 });
 */
 
-// Track IRC (Server) Connections
-global.connections = {};
-
 const jBNC = require('./lib/Server');
 
-new jBNC();
-
-//const server = new jBNC();
+const server = new jBNC();
+server.listen();
