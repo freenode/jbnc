@@ -37,6 +37,8 @@ global.SERVER = global.BOUNCER_MODE == 'gateway' ? (config.server ? config.serve
 global.MSG_REDISTRIBUTION = config.MsgRedistribution ? true : false;
 global.DEBUG = config.debug ? config.debug : false;
 global.WEBIRCSPECIAL = config.webircSpecial ? config.webircSpecial : false;
+global.IRC_STANDARDS = config.ircStandards ? config.ircStandards : true;
+global.UNCAUGHTEXCEPTION = config.uncaughtException ? config.uncaughtException : true;
 
 global.ircCommandList = new Set(["JOIN", "PART", "QUIT", "MODE", "PING", "NICK", "KICK"]);
 global.ircCommandRedistributeMessagesOnConnect = new Set(["AWAY", "NICK", "ACCOUNT", "PART", "QUIT", "MODE", "KICK", "TOPIC"]);
@@ -53,12 +55,12 @@ process.on('SIGHUP', function () {
   global.BOUNCER_ADMIN = config.bouncerAdmin ? config.bouncerAdmin : '';
 });
 
-/*
-// Prevent BNC from crashing for all other users when an error is caused by a user (with log error and time)
-process.on('uncaughtException', (err, origin) => {
-  console.error(`${parseInt(Number(new Date()) / 1000)} # Serious problem (${origin}) - this should not happen but the JBNC is still running. ${err.stack}`);
-});
-*/
+if (global.UNCAUGHTEXCEPTION) {
+  // Prevent BNC from crashing for all other users when an error is caused by a user (with log error and time)
+  process.on('uncaughtException', (err, origin) => {
+    console.error(`${parseInt(Number(new Date()) / 1000)} # Serious problem (${origin}) - this should not happen but the JBNC is still running. ${err.stack}`);
+  });
+}
 
 const jBNC = require('./lib/Server');
 
