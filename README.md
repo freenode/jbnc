@@ -178,14 +178,19 @@ To use it, simply install `npm install express express-session` and add the foll
 
 Then launch the web page in the browser at `http://127.0.0.1:8889`
 
-The web page is designed to be used with a proxy pass from nginx or httpd.
+The web page is designed to be used with a proxy from nginx or httpd, by creating a subdomain like https://j-bnc.domain.com and configuring the proxy:
 
 For nginx, something like:
 
 ```
 server {
-    ...
-    location /adminpanel {
+    listen 443 ssl;
+    server_name j-bnc.domain.com;
+
+    ssl_certificate /path/to/your/certificate.crt;
+    ssl_certificate_key /path/to/your/private.key;
+
+    location / {
         proxy_pass http://127.0.0.1:8889;
         ...
     }
@@ -196,9 +201,14 @@ And for httpd:
 
 ```
 <VirtualHost *:443>
-    ...
-    ProxyPass /adminpanel http://127.0.0.1:8889
-    ProxyPassReverse /adminpanel http://127.0.0.1:8889
+    ServerName j-bnc.domain.com
+
+    SSLEngine on
+    SSLCertificateFile /path/to/your/certificate.crt
+    SSLCertificateKeyFile /path/to/your/private.key
+
+    ProxyPass / http://127.0.0.1:8889/
+    ProxyPassReverse / http://127.0.0.1:8889/
     ...
 </VirtualHost>
 ```
