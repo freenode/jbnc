@@ -69,11 +69,34 @@ node bouncer.js somefile.conf &
 ```
 
 #### Keep it running forever (no downtime)
+### immortal
 To keep things running 24/7/365, there's a great app called [immortal](https://immortal.run/).
 
 The immortaldir files are located in this repo (jbnc.yml).
 
 Note: To use immortal on ubuntu, after following the steps on the page, please be sure to `systemctl enable immortaldir` as well as start.
+
+### pm2
+Alternatively, there's pm2. To install:
+```
+npm install pm2 -g
+```
+To prevent logs from becoming too large, simply install:
+```
+pm2 install pm2-logrotate
+```
+No configuration is needed. It works as soon as any application is launched.
+
+To start jbnc:
+```
+cd /home/folder/jbnc
+pm2 start bouncer.js
+or sudo pm2 start bouncer.js (if using SSL certificates from Let's Encrypt directories in /etc)
+```
+To stop:
+```
+Replace "start" with "stop"
+```
 
 ### IRC Client
 You just need to set your password in your jbnc config and then setup your IRC client:
@@ -140,6 +163,50 @@ SomePassword/buffername
 ```
 
 An example buffername could be 'desktop' and on the mobile phone could be 'mobile.'
+
+
+### Web Admin Panel
+
+A web panel for an administrator is now integrated with jbnc. It is optional.
+To use it, simply install `npm install express express-session` and add the following to the jbnc.conf file:
+```
+  "WebAdminPanel": true,
+  "WebAdminPanelPort": 8889,
+  "WebAdminPanelSecret":"<a_randomly_invented_key>",
+  "WebAdminPanelPassword":"<password>",
+```
+
+Then launch the web page in the browser at `http://127.0.0.1:8889`
+
+The web page is designed to be used with a proxy pass from nginx or httpd.
+
+For nginx, something like:
+
+```
+server {
+    ...
+    location /adminpanel {
+        proxy_pass http://127.0.0.1:8889;
+        ...
+    }
+    ...
+}
+```
+And for httpd:
+
+```
+<VirtualHost *:443>
+    ...
+    ProxyPass /adminpanel http://127.0.0.1:8889
+    ProxyPassReverse /adminpanel http://127.0.0.1:8889
+    ...
+</VirtualHost>
+```
+
+It is recommended to run the web page on an HTTPS-enabled site since both CDNs are HTTPS-enabled.
+
+
+###########
 
 
 ### Copyright

@@ -1,4 +1,4 @@
-// jbnc v0.9.0
+// jbnc v0.9.1
 // Copyright (C) 2020 Andrew Lee <andrew@imperialfamily.com>
 // All Rights Reserved.
 const fs = require('fs');
@@ -39,9 +39,16 @@ global.DEBUG = config.debug ? config.debug : false;
 global.WEBIRCSPECIAL = config.webircSpecial ? config.webircSpecial : false;
 global.IRC_STANDARDS = config.ircStandards ? config.ircStandards : true;
 global.UNCAUGHTEXCEPTION = config.uncaughtException ? config.uncaughtException : true;
+global.WEBADMINPANEL = config.WebAdminPanel ? config.WebAdminPanel : false;
+global.WEBADMINPANEL_PORT = config.WebAdminPanelPort ? config.WebAdminPanelPort : 8889;
+global.WEBADMINPANEL_PASSWORD = config.WebAdminPanelPassword ? config.WebAdminPanelPassword : false;
+global.WEBADMINPANEL_SECRET = config.WebAdminPanelSecret ? config.WebAdminPanelSecret : 'keyboard cat';
 
 global.ircCommandList = new Set(["JOIN", "PART", "QUIT", "MODE", "PING", "NICK", "KICK"]);
 global.ircCommandRedistributeMessagesOnConnect = new Set(["AWAY", "NICK", "ACCOUNT", "PART", "QUIT", "MODE", "KICK", "TOPIC"]);
+
+global.LAST_LAUNCH = new Date().toLocaleString();
+global.LAST_BUG = 'none';
 
 
 // Reload passwords on sighup
@@ -59,6 +66,7 @@ if (global.UNCAUGHTEXCEPTION) {
   // Prevent BNC from crashing for all other users when an error is caused by a user (with log error and time)
   process.on('uncaughtException', (err, origin) => {
     console.error(`${parseInt(Number(new Date()) / 1000)} # Serious problem (${origin}) - this should not happen but the JBNC is still running. ${err.stack}`);
+    global.LAST_BUG = new Date().toLocaleString();
   });
 }
 
