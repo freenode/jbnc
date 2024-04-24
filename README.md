@@ -215,6 +215,14 @@ And for httpd:
 
 It is recommended to run the web page on an HTTPS-enabled site since both CDNs are HTTPS-enabled.
 
+The web page is very basic, it displays:
+- The last launch of JBNC
+- The last bug of JBNC
+- The number of connections (clients)
+- The connected clients
+- Ability to kill a user
+- Ability to view the number of channels for each user
+
 
 ###########
 
