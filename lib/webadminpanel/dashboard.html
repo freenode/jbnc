@@ -10,6 +10,9 @@
         body {
             padding: 0 20px;
         }
+        li {
+            margin: 3px;
+        }
     </style>
 </head>
 
@@ -21,7 +24,7 @@
         <h2 class="mt-4">Connections (total: {{ count }}) :</h2>
         <ul>
             <li v-for="connection in connections" :key="connection.id">
-                Key: {{ connection.key }} - Nick: {{ connection.nick }} - Number of channels: {{ connection.channelCount }} - <button class="kill" :data-key="connection.key">Kill</button>
+                Key: {{ connection.key }} - Nick: {{ connection.nick }} - User: {{ connection.user }} - Host: {{ connection.host }} - Number of channels: {{ connection.channelCount }} - <button class="kill btn btn-primary" @click="removeConnection(connection.key, $event)">Kill</button>
             </li>
         </ul>
     </div>
@@ -54,22 +57,11 @@
                         .catch(error => {
                             console.error('Error while retrieving data:', error);
                         });
-                }
-            },
-            mounted() {
-                this.fetchData();
-                setInterval(() => {
-                    this.fetchData();
-                }, 5000);
-            }
-        });
-
-        document.addEventListener("DOMContentLoaded", function() {
-            document.addEventListener("click", function(event) {
-                if (event.target.classList.contains('kill')) {
+                },
+                removeConnection(key, event) {
                     var data = {
                         command: "kill",
-                        key: event.target.getAttribute('data-key')
+                        key: key
                     };
 
                     var url = new URL("/send", window.location.origin);
@@ -83,10 +75,14 @@
                                 throw new Error('Error fetching data');
                             }
                         })
-                        .then(function(data) {
+                        .then((data) => {
                             if (data == "disconnected") {
                                 event.target.innerText="disconnected !";
-                                event.target.disabled=true;
+                                const index = this.connections.findIndex(connection => connection.key === key);
+                                if (index !== -1) {
+                                    this.connections.splice(index, 1);
+                                    this.count--;
+                                }
                             }
                             else 
                                 console.log("Error !");
@@ -95,10 +91,14 @@
                             console.error("Error sending request:", error);
                         });
                 }
-            });
+            },
+            mounted() {
+                this.fetchData();
+                setInterval(() => {
+                    this.fetchData();
+                }, 5000);
+            }
         });
-
-
 
     </script>
 </body>
