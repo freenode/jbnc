@@ -24,7 +24,7 @@
         <h2 class="mt-4">Connections (total: {{ count }}) :</h2>
         <ul>
             <li v-for="connection in connections" :key="connection.id">
-                Key: {{ connection.key }} - Nick: {{ connection.nick }} - User: {{ connection.user }} - Host: {{ connection.host }} - Number of channels: {{ connection.channelCount }} - <button class="kill btn btn-primary" @click="removeConnection(connection.key, $event)">Kill</button>
+                <button class="kill btn btn-primary" @click="removeConnection(connection.key, $event)">Kill</button> Nick: {{ connection.nick }} - User: {{ connection.user }} - Host: {{ connection.host }} - Number of channels: {{ connection.channelCount }} - <span v-if="connection.goneTime !== ''" class="p-2 text-light bg-danger">{{ calculateElapsedTime(connection.goneTime) }}</span>
             </li>
         </ul>
     </div>
@@ -77,7 +77,6 @@
                         })
                         .then((data) => {
                             if (data == "disconnected") {
-                                event.target.innerText="disconnected !";
                                 const index = this.connections.findIndex(connection => connection.key === key);
                                 if (index !== -1) {
                                     this.connections.splice(index, 1);
@@ -90,6 +89,17 @@
                         .catch(function(error) {
                             console.error("Error sending request:", error);
                         });
+                },
+                calculateElapsedTime(goneTime) {
+                    const currentTime = Math.floor(Date.now() / 1000);
+                    const elapsedSeconds = currentTime - goneTime;
+
+                    if (elapsedSeconds < 60) {
+                        return 'Gone since ' + elapsedSeconds + ' seconds';
+                    } else {
+                        const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+                        return 'Gone since ' + elapsedMinutes + ' minutes';
+                    }
                 }
             },
             mounted() {
@@ -99,7 +109,6 @@
                 }, 5000);
             }
         });
-
     </script>
 </body>
 </html>
