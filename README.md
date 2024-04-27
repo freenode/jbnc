@@ -176,7 +176,7 @@ To use it, simply install `npm install express express-session` and add the foll
   "WebAdminPanelPassword":"<password>",
 ```
 
-Then launch the web page in the browser at `http://127.0.0.1:8889`
+Then launch the web page in the browser at `http://127.0.0.1:8889`. The login is `bouncerAdmin` and the password is `WebAdminPanelPassword`.
 
 The web page is designed to be used with a proxy from nginx or httpd, by creating a subdomain like https://j-bnc.domain.com and configuring the proxy:
 
