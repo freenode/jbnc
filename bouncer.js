@@ -64,11 +64,25 @@ process.on('SIGHUP', function () {
 
 if (global.UNCAUGHTEXCEPTION) {
   // Prevent BNC from crashing for all other users when an error is caused by a user (with log error and time)
-  process.on('uncaughtException', (err, origin) => {
+  /*process.on('uncaughtException', (err, origin) => {
     console.error(`${parseInt(Number(new Date()) / 1000)} # Serious problem (${origin}) - this should not happen but the JBNC is still running. ${err.stack}`);
     global.LAST_BUG = new Date().toLocaleString();
+  });*/
+
+  process.on('uncaughtException', (err, origin) => {
+    if (Array.isArray(err)) {
+      // Do something with the error if it's an array
+      console.error(`${new Date().toLocaleString()} - Error originating from an array:`, err);
+    } else {
+      // Handle other types of errors
+      console.error(`${new Date().toLocaleString()} - ${parseInt(Number(new Date()) / 1000)} # Serious problem (${origin}) - this should not happen but the JBNC is still running. ${err.stack}`);
+    }
+    global.LAST_BUG = new Date().toLocaleString();
   });
+  
 }
+
+
 
 const jBNC = require('./lib/Server');
 
