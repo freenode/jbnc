@@ -22,9 +22,9 @@
         <h4 class="mt-3">Last Launch: {{ last_launch }}</h4>
         <h5>Last UncaughtException: {{ last_bug }}</h5>
         <h2 class="mt-4">Connections (total: {{ count }}) :</h2>
-        <ul>
-            <li v-for="connection in connections" :key="connection.id">
-                <button class="kill btn btn-primary" @click="removeConnection(connection.key, $event)">Kill</button> Nick: {{ connection.nick }} - User: {{ connection.user }} - Host: {{ connection.host }} - Number of channels: {{ connection.channelCount }} - Users: {{ connection.users }} - <span v-if="connection.goneTime !== ''" class="p-2 text-light bg-danger">{{ calculateElapsedTime(connection.goneTime) }}</span>
+        <ul class="list-group">
+            <li class="list-group-item" v-for="connection in connections" :key="connection.id">
+                <button class="kill btn btn-primary" @click="removeConnection(connection.key, $event)">Kill</button> <strong>Nick:</strong> {{ connection.nick }} - <strong>User:</strong> {{ connection.user }} - <strong>Host:</strong> {{ connection.host }} - <strong>Number of channels:</strong> {{ connection.channelCount }} - <strong>Users:</strong> {{ connection.users }} - <strong>Connections on the session since the beginning:</strong> {{ connection.sessionConnections }} - <span v-if="connection.goneTime !== ''" class="p-2 text-light bg-danger">{{ calculateElapsedTime(connection.goneTime) }}</span>
             </li>
         </ul>
     </div>
