@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jbnc's Status</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-dark-5@1.1.3/dist/cdn/bootstrap-dark.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+
+<body class="bg-dark text-light">
+    <div id="app" class="container-fluid py-4">
+        <h1 class="text-white fw-bold mb-4">JBNC</h1>
+        
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-tabs nav-fill mb-3">
+            <li class="nav-item">
+                <a 
+                    class="nav-link" 
+                    :class="{ 'active': activeTab === 'clients' }" 
+                    href="#" 
+                    @click.prevent="activeTab = 'clients'"
+                >
+                    Clients
+                </a>
+            </li>
+            <li class="nav-item">
+                <a 
+                    class="nav-link" 
+                    :class="{ 'active': activeTab === 'reports' }" 
+                    href="#" 
+                    @click.prevent="activeTab = 'reports'"
+                >
+                    Reports
+                </a>
+            </li>
+        </ul>
+
+        <!-- Clients Tab -->
+        <div v-if="activeTab === 'clients'">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <h4 class="text-white-50">Last Launch: <span class="text-light">{{ last_launch }}</span></h4>
+                </div>
+                <div class="col-md-6">
+                    <h5 class="text-white-50">Last UncaughtException: <span class="text-light">{{ last_bug }}</span></h5>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark text-light"><i class="bi bi-search"></i></span>
+                        <input 
+                            type="text" 
+                            class="form-control bg-dark text-light" 
+                            v-model="searchTerm" 
+                            placeholder="Search Nick, Host, or Channels..."
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="mt-4 text-white-50">Connections <span class="text-light">(total: {{ filteredConnections.length }})</span></h2>
+            
+            <div class="row">
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <button 
+                                            class="btn btn-link text-light p-0" 
+                                            @click="sortBy('nick')"
+                                        >
+                                            Nick 
+                                            <i :class="getSortIcon('nick')"></i>
+                                        </button>
+                                    </th>
+                                    <th>
+                                        <button 
+                                            class="btn btn-link text-light p-0" 
+                                            @click="sortBy('user')"
+                                        >
+                                            User 
+                                            <i :class="getSortIcon('user')"></i>
+                                        </button>
+                                    </th>
+                                    <th>
+                                        <button 
+                                            class="btn btn-link text-light p-0" 
+                                            @click="sortBy('host')"
+                                        >
+                                            Host 
+                                            <i :class="getSortIcon('host')"></i>
+                                        </button>
+                                    </th>
+                                    <th>
+                                        <button 
+                                            class="btn btn-link text-light p-0" 
+                                            @click="sortBy('channelCount')"
+                                        >
+                                            <span class="text-primary">#</span> Channels 
+                                            <i :class="getSortIcon('channelCount')"></i>
+                                        </button>
+                                    </th>
+                                    <th>
+                                        <button 
+                                            class="btn btn-link text-light p-0" 
+                                            @click="sortBy('users')"
+                                        >
+                                            Users 
+                                            <i :class="getSortIcon('users')"></i>
+                                        </button>
+                                    </th>
+                                    <th>
+                                        <button 
+                                            class="btn btn-link text-light p-0" 
+                                            @click="sortBy('sessionConnections')"
+                                        >
+                                            Total Connects 
+                                            <i :class="getSortIcon('sessionConnections')"></i>
+                                        </button>
+                                    </th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="connection in filteredConnections" :key="connection.id">
+                                    <td>{{ connection.nick }}</td>
+                                    <td>{{ connection.user }}</td>
+                                    <td>{{ connection.host }}</td>
+                                    <td>{{ connection.channelCount }}</td>
+                                    <td>{{ connection.users }}</td>
+                                    <td>{{ connection.sessionConnections }}</td>
+                                    <td>
+                                        <button 
+                                            class="btn btn-primary btn-sm" 
+                                            @click="removeConnection(connection.key, $event)"
+                                        >
+                                            Kill
+                                        </button>
+                                        <span 
+                                            v-if="connection.goneTime !== ''" 
+                                            class="badge bg-danger ms-2"
+                                        >
+                                            {{ calculateElapsedTime(connection.goneTime) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div v-if="activeTab === 'reports'">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input 
+                            type="number" 
+                            class="form-control bg-dark text-light" 
+                            v-model="clearReportsHours" 
+                            placeholder="Hours"
+                        >
+                        <button 
+                            class="btn btn-danger" 
+                            @click="clearOldReports"
+                        >
+                            Clear Reports Older Than
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <button 
+                                            class="btn btn-link text-light p-0" 
+                                            @click="sortReportsBy('id')"
+                                        >
+                                            ID 
+                                            <i :class="getReportsSortIcon('id')"></i>
+                                        </button>
+                                    </th>
+                                    <th>
+                                        <button 
+                                            class="btn btn-link text-light p-0" 
+                                            @click="sortReportsBy('time')"
+                                        >
+                                            Time 
+                                            <i :class="getReportsSortIcon('time')"></i>
+                                        </button>
+                                    </th>
+                                    <th>
+                                        <button 
+                                            class="btn btn-link text-light p-0" 
+                                            @click="sortReportsBy('report')"
+                                        >
+                                            Report 
+                                            <i :class="getReportsSortIcon('report')"></i>
+                                        </button>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="report in sortedReports" :key="report.id">
+                                    <td>{{ report.id }}</td>
+                                    <td>{{ report.time }}</td>
+                                    <td>{{ report.report }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = new Vue({
+            el: '#app',
+            data: {
+                // Clients tab data
+                connections: [],
+                count: 0,
+                last_launch: 'Pending',
+                last_bug: 'Pending',
+                searchTerm: '',
+                sortKey: '',
+                sortOrder: 1,
+
+                // Reports tab data
+                reports: [],
+                reportsSortKey: '',
+                reportsSortOrder: 1,
+                clearReportsHours: null,
+
+                // Active tab
+                activeTab: 'clients'
+            },
+            computed: {
+                filteredConnections() {
+                    let filtered = this.connections;
+                    
+                    // Search filter
+                    if (this.searchTerm) {
+                        const searchTermLower = this.searchTerm.toLowerCase();
+                        filtered = filtered.filter(connection => 
+                            connection.nick.toLowerCase().includes(searchTermLower) ||
+                            connection.host.toLowerCase().includes(searchTermLower) ||
+                            connection.channelCount.toString().includes(searchTermLower)
+                        );
+                    }
+                    
+                    // Sorting
+                    if (this.sortKey) {
+                        filtered.sort((a, b) => {
+                            let modifier = this.sortOrder;
+                            if (a[this.sortKey] < b[this.sortKey]) return -1 * modifier;
+                            if (a[this.sortKey] > b[this.sortKey]) return 1 * modifier;
+                            return 0;
+                        });
+                    }
+                    
+                    return filtered;
+                },
+                sortedReports() {
+                    let sorted = [...this.reports];
+                    
+                    if (this.reportsSortKey) {
+                        sorted.sort((a, b) => {
+                            let modifier = this.reportsSortOrder;
+                            if (a[this.reportsSortKey] < b[this.reportsSortKey]) return -1 * modifier;
+                            if (a[this.reportsSortKey] > b[this.reportsSortKey]) return 1 * modifier;
+                            return 0;
+                        });
+                    }
+                    
+                    return sorted;
+                }
+            },
+            methods: {
+                // Clients tab methods
+                fetchData() {
+                    const url = '/connections.json';
+                    fetch(url)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('The request failed.');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            this.connections = data.connections;
+                            this.count = data.count;
+                            this.last_launch = data.last_launch;
+                            this.last_bug = data.last_bug;
+                        })
+                        .catch(error => {
+                            console.error('Error while retrieving data:', error);
+                        });
+                },
+                fetchReports() {
+                    const url = '/reports.json';
+                    fetch(url)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('The reports request failed.');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            this.reports = data.reports;
+                        })
+                        .catch(error => {
+                            console.error('Error while retrieving reports:', error);
+                        });
+                },
+                removeConnection(key, event) {
+                    var data = {
+                        command: "kill",
+                        key: key
+                    };
+
+                    var url = new URL("/send", window.location.origin);
+                    url.search = new URLSearchParams(data);
+
+                    fetch(url.href)
+                        .then(function(response) {
+                            if (response.ok) {
+                                return response.text();
+                            } else {
+                                throw new Error('Error fetching data');
+                            }
+                        })
+                        .then((data) => {
+                            if (data == "disconnected") {
+                                const index = this.connections.findIndex(connection => connection.key === key);
+                                if (index !== -1) {
+                                    this.connections.splice(index, 1);
+                                }
+                            }
+                            else 
+                                console.log("Error !");
+                        })
+                        .catch(function(error) {
+                            console.error("Error sending request:", error);
+                        });
+                },
+                calculateElapsedTime(goneTime) {
+                    const currentTime = Math.floor(Date.now() / 1000);
+                    const elapsedSeconds = currentTime - goneTime;
+
+                    if (elapsedSeconds < 60) {
+                        return 'Gone since ' + elapsedSeconds + ' seconds';
+                    } else {
+                        const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+                        return 'Gone since ' + elapsedMinutes + ' minutes';
+                    }
+                },
+                sortBy(key) {
+                    // If sorting by the same key, toggle sort order
+                    if (this.sortKey === key) {
+                        this.sortOrder = this.sortOrder * -1;
+                    } else {
+                        // New key, start with ascending sort
+                        this.sortKey = key;
+                        this.sortOrder = 1;
+                    }
+                },
+                getSortIcon(key) {
+                    if (this.sortKey !== key) return 'bi bi-filter';
+                    return this.sortOrder === 1 
+                        ? 'bi bi-sort-down' 
+                        : 'bi bi-sort-up';
+                },
+
+                // Reports tab methods
+                sortReportsBy(key) {
+                    // If sorting by the same key, toggle sort order
+                    if (this.reportsSortKey === key) {
+                        this.reportsSortOrder = this.reportsSortOrder * -1;
+                    } else {
+                        // New key, start with ascending sort
+                        this.reportsSortKey = key;
+                        this.reportsSortOrder = 1;
+                    }
+                },
+                getReportsSortIcon(key) {
+                    if (this.reportsSortKey !== key) return 'bi bi-filter';
+                    return this.reportsSortOrder === 1 
+                        ? 'bi bi-sort-down' 
+                        : 'bi bi-sort-up';
+                },
+                clearOldReports() {
+                    if (!this.clearReportsHours) {
+                        alert('Please enter the number of hours');
+                        return;
+                    }
+
+                    const url = new URL("/send", window.location.origin);
+                    var data = {
+                        command: "clear",
+                        hours: this.clearReportsHours
+                    };
+                    url.search = new URLSearchParams(data);
+
+                    fetch(url.href)
+                        .then(response => {
+                            if (response.ok) {
+                                // Refresh reports after clearing
+                                this.fetchReports();
+                            } else {
+                                throw new Error('Failed to clear reports');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error clearing reports:', error);
+                            alert('Failed to clear reports');
+                        });
+                }
+            },
+            mounted() {
+                this.fetchData();
+                this.fetchReports();
+                
+                // Periodic data refresh
+                setInterval(() => {
+                    console.log(`Tab: ${this.activeTab}`);
+                    if (this.activeTab === 'clients') {
+                        this.fetchData();
+                    }
+                    if (this.activeTab === 'reports') {
+                        this.fetchReports();
+                    }
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>

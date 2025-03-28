@@ -3,6 +3,9 @@
 // All Rights Reserved.
 const fs = require('fs');
 
+const doreport = require('./lib/Reports');
+
+
 // Load jbnc.conf
 let _config = process.argv[2] ? process.argv[2] : "jbnc.conf";
 let config = {};
@@ -15,6 +18,8 @@ else {
 }
 
 // Set config vars
+global.UI_DEFAULT_SAVECFG = config.uiDefaultSaveCfg ? config.uiDefaultSaveCfg : '../jbnc-ui.conf';
+global.PURGE_REPORTS = config.purgeReports ? config.purgeReports : 48;
 global.BOUNCER_PORT = config.bouncerPort ? config.bouncerPort : 8888;
 global.BOUNCER_IP = config.bouncerIp ? config.bouncerIp : null;
 global.BOUNCER_USER = config.bouncerUser ? config.bouncerUser : '';
@@ -82,7 +87,29 @@ if (global.UNCAUGHTEXCEPTION) {
   
 }
 
+const initLogo = `
+     _ ____  _   _  ____ 
+    | | __ )| \\ | |/ ___|
+ _  | |  _ \\|  \\| | |    
+| |_| | |_) | |\\  | |___ 
+ \\___/|____/|_| \\_|\\____|
+                         
+${new Date().toLocaleString()}                         
 
+`;
+
+console.log(initLogo);
+
+// Announce launch information / reporting.
+const interval = global.PURGE_REPORTS * 60 * 60 * 1000; // 48 hours in milliseconds
+console.log(`Will clear reports every ${global.PURGE_REPORTS} hours...`);
+
+setInterval(() => {
+    console.log(`Clearing reports older than ${global.PURGE_REPORTS} hours...`);
+    doreport.clearReports(global.PURGE_REPORTS);
+}, interval);
+
+// Launch initialization stuff
 
 const jBNC = require('./lib/Server');
 
