@@ -602,7 +602,6 @@ const app = new Vue({
         
         // Periodic data refresh
         setInterval(() => {
-            console.log(`Tab: ${this.activeTab}`);
             if (this.activeTab === 'clients') {
                 this.fetchData();
             }
@@ -610,10 +609,10 @@ const app = new Vue({
                 this.fetchReports();
             }
             // Optional: periodically refresh settings
-            // if (this.activeTab === 'settings') {
+            //if (this.activeTab === 'settings') {
             //     this.fetchSettings();
-            // }
-        }, 5000);
+            //}
+        }, 30000);
     }
 });
     </script>
