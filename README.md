@@ -56,7 +56,11 @@ bouncerDefaultOpmode: auto op/voice/hop mode default (can be turned on per clien
 bouncerTimeout: how long until after no clients connected will the user stay connected
 bufferMaxSize: maximum # of bytes a client buffer can hold before its terminated or 0 for unlimited
 purgeReports: NumberInHours (default 48) number in hours to purge reports (logs in webadmin)
-uiDefaultSaveCfg: Default config the webadmin Save Config button saves to (can only edit this here) default is "../jbnc-ui.cfg" - launch 'node bouncer.js jbnc-ui.cfg' after to use it
+WebAdminPanel: true|false
+WebAdminPanelPort: port number (default 8899)
+WebAdminPanelSecret: put a secret hash here, keyboard smash if you have to.
+WebAdminPanelPassword: your webadmin panel password. Login: bnc-admin (up top) Password: this password.
+uiDefaultSaveCfg: Default config the webadmin Save Config button saves to (can only edit this here) default is "../jbnc-ui.cfg" which is jbnc dir - launch 'node bouncer.js jbnc-ui.cfg' after to use it
 debug: true|false debugging on or off for dev
 
 ```
