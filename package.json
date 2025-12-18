@@ -1,0 +1,37 @@
+{
+  "name": "jbnc",
+  "version": "0.10.0",
+  "description": "IRC Bouncer with no registration/setup required written in nodejs with support for separate client buffers and always-on.",
+  "main": "bouncer.js",
+  "directories": {
+    "example": "examples",
+    "lib": "lib"
+  },
+  "scripts": {
+    "start": "node bouncer.js",
+    "test": "node bouncer.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "express-session": "^1.18.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/freenode/jbnc.git"
+  },
+  "keywords": [
+    "irc",
+    "bnc"
+  ],
+  "author": "jbnc contributors",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/freenode/jbnc/issues"
+  },
+  "homepage": "https://github.com/freenode/jbnc#readme",
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "eslint": "^9.39.2",
+    "globals": "^16.5.0"
+  }
+}

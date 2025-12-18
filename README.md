@@ -31,7 +31,7 @@ Works on:
 ### Setup / Installation
 1. Clone the repo
 ```
-git clone https://github.com/realrasengan/jbnc
+git clone https://github.com/freenode/jbnc.git
 ```
 2. Edit config (there are different example.confs for different use cases)
 ```

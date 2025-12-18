@@ -1,10 +1,18 @@
-// jbnc v0.9.1
+// jbnc v0.10.0
 // Copyright (C) 2020 Andrew Lee <andrew@imperialfamily.com>
 // All Rights Reserved.
 const fs = require('fs');
+const os = require('os');
+
+let CONF = "jbnc.conf";
+
+if (os.hostname() === 'DESKTOP-V81SCSP') {
+  CONF = "jbnc-dev.conf";
+  console.log('Config started with: '+os.hostname());
+}
 
 // Load jbnc.conf
-let _config = process.argv[2] ? process.argv[2] : "jbnc.conf";
+let _config = process.argv[2] ? process.argv[2] : CONF;
 let config = {};
 if (fs.existsSync(_config)) {
   config = JSON.parse(fs.readFileSync(_config));
@@ -25,6 +33,7 @@ global.BOUNCER_MODE = config.mode ? config.mode : 'bouncer';
 global.BOUNCER_TIMEOUT = config.bouncerTimeout ? config.bouncerTimeout : 0;
 global.BUFFER_MAXSIZE = config.bufferMaxSize ? config.bufferMaxSize : 52428800;
 global.BUFFER_LINEMAX = config.lineMax ? config.lineMax : 1500;
+global.MSG_REDISTRIBUTION_LINEMAX = config.msgRedistributionLineMax ? config.msgRedistributionLineMax : 300;
 global.BOUNCER_SHACK = config.bouncerShack ? config.bouncerShack : 10;
 global.SERVER_WEBIRC = config.webircPassword ? config.webircPassword : '';
 global.SERVER_WEBIRCHASHIP = config.webircHashIp ? true : false;
